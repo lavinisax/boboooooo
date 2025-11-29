@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
@@ -69,14 +68,8 @@
             opacity: 0.5;
             pointer-events: none;
             z-index: 1;
-            animation: floatUp 6s infinite ease-in;
+            animation: floatDown 6s infinite linear;
             text-shadow: 0 0 5px red;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(110vh) scale(0.5); opacity: 0; }
-            20% { opacity: 0.8; }
-            80% { opacity: 0.8; }
-            100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
         }
 
         .menu-content {
@@ -147,8 +140,25 @@
         .btn-levels { background-color: #FBBF24; color: black; }
         .btn-settings { background-color: #9CA3AF; color: black; font-size: 1rem; padding: 0.8rem 1.5rem; display: block; margin: 10px auto; }
         
-        .btn-bug { background-color: #EF4444; color: white; font-size: 1rem; padding: 0.8rem 2rem; margin-top: 10px; width: 80%; max-width: 300px; }
-        .btn-sugg { background-color: #3B82F6; color: white; font-size: 1rem; padding: 0.8rem 2rem; margin-top: 10px; width: 80%; max-width: 300px; }
+        /* Özel Butonlar (Bug & Suggestion) */
+        .btn-bug { 
+            background-color: #EF4444; 
+            color: white; 
+            font-size: 1.1rem; 
+            padding: 0.8rem 2rem; 
+            margin-top: 20px; 
+            width: auto;
+            min-width: 220px;
+        }
+        .btn-sugg { 
+            background-color: #3B82F6; 
+            color: white; 
+            font-size: 1.1rem; 
+            padding: 0.8rem 2rem; 
+            margin-top: 10px; 
+            width: auto;
+            min-width: 220px;
+        }
         
         .btn-back { background-color: #F87171; color: white; margin-top: 20px; }
 
@@ -203,30 +213,12 @@
 
         /* Ayarlar */
         .settings-section { margin-bottom: 30px; text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center; }
-        
-        /* Dil Butonları Düzeni - Düzeltildi */
-        .lang-container {
-            display: flex;
-            justify-content: center;
-            gap: 20px; /* Butonlar arası boşluk */
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .lang-btn { 
-            padding: 0.5rem 1.5rem; 
-            background: #374151; 
-            color: white; 
-            border: 2px solid #9CA3AF; 
-            font-weight: normal;
-            min-width: 100px;
-        }
+        .lang-container { display: flex; justify-content: center; gap: 20px; margin-top: 10px; flex-wrap: wrap; }
+        .lang-btn { margin: 0 10px; background: #374151; color: white; border: 2px solid #9CA3AF; font-weight: normal; min-width: 100px; }
         .lang-btn.active { background: #4ADE80; color: black; border-color: white; }
         
         #suggestions-box { display: none; margin-top: 10px; width: 100%; }
-        .suggestion-toggle-btn {
-            background: none; border: none; color: #FACC15; text-decoration: underline; 
-            font-size: 0.9rem; cursor: pointer; box-shadow: none; font-family: sans-serif; text-transform: none;
-        }
+        
         textarea { width: 80%; height: 80px; border-radius: 10px; padding: 10px; margin-top: 10px; resize: none; background: #eee; font-family: sans-serif; font-size: 1rem; color:black; }
 
         /* OYUN İÇİ GÖSTERGELER */
@@ -422,8 +414,8 @@
                         <button class="lang-btn" onclick="setLanguage('en')" id="btn-en">ENGLISH</button>
                     </div>
                 </div>
-                <div class="settings-section" style="position:relative; text-align:left;">
-                    <button class="suggestion-toggle-btn" onclick="toggleSuggestions()" id="btn-toggle-sugg">Öneri Var mı? (Tıkla)</button>
+                <div class="settings-section" style="position:relative; text-align:center;">
+                    <button class="btn-sugg" onclick="toggleSuggestions()" id="btn-toggle-sugg">ÖNERİ YAP 💡</button>
                     <div id="suggestions-box">
                         <textarea placeholder="..."></textarea>
                         <button class="btn-start" style="font-size:0.8rem; padding:0.3rem 0.8rem; margin-top:5px;" onclick="alert('Gönderildi! / Sent!')" id="btn-submit">GÖNDER</button>
@@ -461,7 +453,6 @@
     </div>
 
     <script>
-        // Import the functions you need from the SDKs you need
         // Ekran Boyutlandırma
         let GAME_WIDTH = window.innerWidth;
         let GAME_HEIGHT = window.innerHeight;
@@ -556,6 +547,8 @@
             const container = document.getElementById('start-screen');
             const existing = container.querySelectorAll('.floating-item');
             existing.forEach(e => e.remove());
+            const existingHearts = container.querySelectorAll('.floating-heart');
+            existingHearts.forEach(e => e.remove());
 
             // Kafalar
             for(let i=0; i<30; i++) {
@@ -577,7 +570,7 @@
                 div.className = 'floating-heart';
                 div.style.fontSize = (20 + Math.random() * 30) + 'px';
                 div.style.left = Math.random() * 100 + '%';
-                div.style.bottom = '-10%';
+                div.style.top = -Math.random() * 20 + '%'; // Kalpler de yukarıdan başlasın
                 div.style.animationDuration = (4 + Math.random() * 6) + 's';
                 div.style.animationDelay = (Math.random() * 5) + 's';
                 container.appendChild(div);
@@ -640,9 +633,11 @@
         }
 
         function updateUI(state) {
+            // Tüm ekranları gizle
             ['start-screen','shop-screen','inventory-screen','levels-screen','settings-screen','gameover-screen','win-screen','ingame-settings-screen'].forEach(id => {
                 const el = document.getElementById(id); if(el) el.style.display = 'none';
             });
+            // HUD elemanlarını gizle
             ['score-board','level-indicator','coin-counter','speedometer','tutorial-text','btn-ingame-settings','pedals-container'].forEach(id => {
                 const el = document.getElementById(id); if(el) el.style.display = 'none';
             });
@@ -708,8 +703,8 @@
             const CAT_CAR = 0x0002, CAT_GROUND = 0x0004, CAT_DRIVER = 0x0008, CAT_COIN = 0x0010, CAT_FINISH = 0x0020;
             const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
 
-            // GİZLİ DUVAR (Arkaya düşmeyi engeller) - Devasa
-            const startWall = Bodies.rectangle(-200, 0, 200, 10000, { isStatic: true, render: { visible: false } });
+            // GİZLİ DUVAR (Arkaya düşmeyi engeller) - YERİ GÜNCELLENDİ (X=50)
+            const startWall = Bodies.rectangle(50, 0, 100, 10000, { isStatic: true, render: { visible: false } });
             Composite.add(world, startWall);
 
             // Zemin
@@ -777,14 +772,12 @@
                 Matter.Engine.update(engine, 1000 / 60);
                 
                 // OTO IŞINLANMA (DÜŞME KONTROLÜ)
-                // Eğer araba çok aşağı düşerse (GAME_HEIGHT + 500), başlangıç noktasına geri ışınla.
                 if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
                     Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 });
                     Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 });
                     Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 });
                     Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 });
                     Matter.Body.setAngularVelocity(car.chassis, 0);
-                    // İsteğe bağlı: Düşünce biraz can/puan gidebilir veya sadece devam eder.
                 }
 
                 const MAX_SPEED = 0.5;
