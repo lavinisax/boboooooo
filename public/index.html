@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BooomBob! - Extreme Edition</title>
+    <title>BooomBob! - Ultimate Edition</title>
     <style>
         body {
             margin: 0;
@@ -24,6 +24,7 @@
             height: 100%;
             background-color: #93C5FD;
             overflow: hidden;
+            transition: background-color 1s;
         }
 
         canvas {
@@ -46,30 +47,25 @@
             overflow: hidden;
         }
 
-        /* ARKA PLAN EFEKTLERİ */
-        .floating-item {
+        /* ARKA PLAN EFEKTLERİ (YAĞMUR GİBİ) */
+        .floating-item, .floating-heart {
             position: absolute;
-            opacity: 0.4;
             pointer-events: none;
-            z-index: 1;
-            animation: floatDown 8s infinite linear;
-        }
-        @keyframes floatDown {
-            0% { transform: translateY(-10vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 0.6; }
-            90% { opacity: 0.6; }
-            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+            z-index: 1; 
+            top: -100px; 
+            animation-name: fallDown;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
         }
 
-        .floating-heart {
-            position: absolute;
-            font-size: 30px;
-            color: #F43F5E;
-            opacity: 0.5;
-            pointer-events: none;
-            z-index: 1;
-            animation: floatDown 6s infinite linear;
-            text-shadow: 0 0 5px red;
+        .floating-item { opacity: 0.6; } 
+        .floating-heart { color: #F43F5E; opacity: 0.8; text-shadow: 0 0 10px red; font-weight: bold; }
+
+        @keyframes fallDown {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
         }
 
         .menu-content {
@@ -78,6 +74,7 @@
             flex-direction: column;
             align-items: center;
             position: relative;
+            width: 100%;
         }
 
         h1 {
@@ -95,7 +92,7 @@
         
         @keyframes shakeTitle {
             0%, 100% { transform: rotate(-3deg) scale(1); }
-            50% { transform: rotate(3deg) scale(1.05); }
+            50% { transform: rotate(3deg) scale(1.1); } 
         }
 
         .subtitle {
@@ -140,25 +137,11 @@
         .btn-levels { background-color: #FBBF24; color: black; }
         .btn-settings { background-color: #9CA3AF; color: black; font-size: 1rem; padding: 0.8rem 1.5rem; display: block; margin: 10px auto; }
         
-        /* Özel Butonlar (Bug & Suggestion) */
-        .btn-bug { 
-            background-color: #EF4444; 
-            color: white; 
-            font-size: 1.1rem; 
-            padding: 0.8rem 2rem; 
-            margin-top: 20px; 
-            width: auto;
-            min-width: 220px;
+        .btn-bug, .btn-sugg { 
+            color: white; font-size: 1rem; padding: 0.8rem 2rem; margin-top: 10px; width: auto; min-width: 220px; 
         }
-        .btn-sugg { 
-            background-color: #3B82F6; 
-            color: white; 
-            font-size: 1.1rem; 
-            padding: 0.8rem 2rem; 
-            margin-top: 10px; 
-            width: auto;
-            min-width: 220px;
-        }
+        .btn-bug { background-color: #EF4444; }
+        .btn-sugg { background-color: #3B82F6; }
         
         .btn-back { background-color: #F87171; color: white; margin-top: 20px; }
 
@@ -201,8 +184,27 @@
             padding-bottom: 5px; font-weight: 500; font-family: 'Impact', sans-serif;
         }
 
-        .coming-soon { font-size: 1.1rem; color: #9CA3AF; font-style: italic; padding: 20px; border: 2px dashed #4B5563; border-radius: 10px; background: rgba(0,0,0,0.3); }
+        /* Shop Grid */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+        }
+        .shop-item {
+            background: #374151; padding: 10px; border: 2px solid #9CA3AF;
+            border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+        }
+        .shop-item:hover { transform: scale(1.05); background: #4B5563; border-color: #FACC15; }
+        .shop-item.owned { border-color: #4ADE80; background: #1F2937; opacity: 0.7; cursor: default; }
+        .shop-item.equipped { border-color: #FACC15; background: #374151; opacity: 1; box-shadow: 0 0 10px #FACC15; }
+        
+        .item-icon { font-size: 2.5rem; margin-bottom: 5px; }
+        .item-name { font-weight: bold; font-size: 0.9rem; margin-bottom: 5px; color: white; }
+        .item-price { color: #FACC15; font-size: 0.9rem; font-weight: bold; }
+        .item-status { font-size: 0.8rem; color: #4ADE80; font-weight: bold; margin-top: 5px; }
 
+        /* Level Seçimi */
         .level-btn {
             width: 100%; margin-bottom: 15px; background: #374151; color: white;
             text-align: left; padding: 20px; display: flex; justify-content: space-between;
@@ -218,7 +220,10 @@
         .lang-btn.active { background: #4ADE80; color: black; border-color: white; }
         
         #suggestions-box { display: none; margin-top: 10px; width: 100%; }
-        
+        .suggestion-toggle-btn {
+            background: none; border: none; color: #FACC15; text-decoration: underline; 
+            font-size: 0.9rem; cursor: pointer; box-shadow: none; font-family: sans-serif; text-transform: none;
+        }
         textarea { width: 80%; height: 80px; border-radius: 10px; padding: 10px; margin-top: 10px; resize: none; background: #eee; font-family: sans-serif; font-size: 1rem; color:black; }
 
         /* OYUN İÇİ GÖSTERGELER */
@@ -321,7 +326,6 @@
         <!-- Oyun İçi HUD -->
         <button id="btn-ingame-settings" onclick="toggleInGameSettings()">⚙️</button>
         
-        <!-- Pedallar -->
         <div id="pedals-container">
             <div id="brake-pedal" class="pedal brake">FREN<br><span style="font-size:0.8rem">(Space)</span></div>
             <div id="gas-pedal" class="pedal gas">GAZ<br><span style="font-size:0.8rem">(D)</span></div>
@@ -338,10 +342,9 @@
 
         <!-- Başlangıç Ekranı -->
         <div id="start-screen" class="overlay">
-            <!-- JS ile eklenecek uçuşan objeler -->
             <div class="menu-content">
                 <h1>BooomBob!</h1>
-                <div class="subtitle">EXTREME EDITION</div>
+                <div class="subtitle">ULTIMATE EDITION</div>
                 
                 <button class="btn-start" style="margin-top: 20px;" onclick="startGame()" id="btn-start">OYNA</button>
                 <button class="btn-settings" onclick="openScreen('settings')" id="btn-settings">AYARLAR ⚙️</button>
@@ -356,7 +359,7 @@
             </div>
         </div>
 
-        <!-- Ekranlar -->
+        <!-- Shop Ekranı -->
         <div id="shop-screen" class="overlay" style="display:none;">
             <div class="shop-header" style="display:flex; justify-content:space-between; width:80%; align-items:center;">
                 <h2 class="screen-title" id="title-shop">MAĞAZA</h2>
@@ -364,26 +367,22 @@
                     🪙 <span id="shop-balance">0</span>
                 </div>
             </div>
-            <div class="scroll-area">
-                <div class="shop-section-title" id="title-drivers">SÜRÜCÜLER</div>
-                <div class="coming-soon" id="txt-soon1">GELECEK GÜNCELLEMEDE... 🚧</div>
-                <div class="shop-section-title" id="title-cars">ARABALAR</div>
-                <div class="coming-soon" id="txt-soon2">GELECEK GÜNCELLEMEDE... 🚧</div>
-                <div class="shop-section-title" id="title-accessories">AKSESUARLAR</div>
-                <div class="coming-soon" id="txt-soon3">GELECEK GÜNCELLEMEDE... 🚧</div>
+            <div class="scroll-area" id="shop-container">
+                <!-- JS ile doldurulacak -->
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back1">GERİ DÖN</button>
         </div>
 
+        <!-- Inventory Ekranı -->
         <div id="inventory-screen" class="overlay" style="display:none;">
             <h2 class="screen-title" style="color:#A78BFA;" id="title-inventory">ENVANTER</h2>
-            <div class="scroll-area" style="display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                <p style="font-size: 2rem; color: #D1D5DB;" id="txt-empty">Çantan bomboş...</p>
-                <div style="font-size: 6rem;">🕸️</div>
+            <div class="scroll-area" id="inventory-container">
+                <!-- JS ile doldurulacak -->
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back2">GERİ DÖN</button>
         </div>
 
+        <!-- Levels Ekranı -->
         <div id="levels-screen" class="overlay" style="display:none;">
             <h2 class="screen-title" style="color:#FBBF24;" id="title-levels">BÖLÜM SEÇ</h2>
             <div class="scroll-area">
@@ -399,6 +398,14 @@
                     <span id="lvl-btn-3">LEVEL 3: ZOR MOD</span>
                     <span class="level-info">200m</span>
                 </button>
+                <button class="level-btn" onclick="selectLevel(4)">
+                    <span id="lvl-btn-4">LEVEL 4: MOON JUMP</span>
+                    <span class="level-info">240m</span>
+                </button>
+                <button class="level-btn" onclick="selectLevel(5)">
+                    <span id="lvl-btn-5">LEVEL 5: MARS ROVER</span>
+                    <span class="level-info">300m</span>
+                </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
         </div>
@@ -408,7 +415,6 @@
             <div class="scroll-area">
                 <div class="settings-section">
                     <span id="lbl-lang" style="font-weight:bold; color:#FACC15; display:block; margin-bottom:10px;">DİL / LANGUAGE</span>
-                    <!-- Dil butonları için flex container -->
                     <div class="lang-container">
                         <button class="lang-btn active" onclick="setLanguage('tr')" id="btn-tr">TÜRKÇE</button>
                         <button class="lang-btn" onclick="setLanguage('en')" id="btn-en">ENGLISH</button>
@@ -453,7 +459,6 @@
     </div>
 
     <script>
-        // Ekran Boyutlandırma
         let GAME_WIDTH = window.innerWidth;
         let GAME_HEIGHT = window.innerHeight;
         window.addEventListener('resize', () => {
@@ -462,13 +467,32 @@
             if(canvas) { canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT; }
         });
 
+        // --- DATA SİSTEMİ ---
+        let wallet = parseInt(localStorage.getItem('boombob_wallet')) || 0;
+        let inventory = JSON.parse(localStorage.getItem('boombob_inventory')) || ['driver_default', 'car_default'];
+        let equipped = JSON.parse(localStorage.getItem('boombob_equipped')) || { driver: 'driver_default', car: 'car_default', accessory: null };
+
+        const SHOP_ITEMS = [
+            { id: 'driver_zombie', type: 'driver', name: 'Zombi Bob', price: 5000, icon: '🧟' },
+            { id: 'driver_alien', type: 'driver', name: 'Uzaylı', price: 10000, icon: '👽' },
+            { id: 'car_blue', type: 'car', name: 'Mavi Şimşek', price: 15000, icon: '🚙' },
+            { id: 'car_gold', type: 'car', name: 'Altın Kral', price: 50000, icon: '👑' },
+            { id: 'acc_turbo', type: 'accessory', name: 'Turbo Motor', price: 20000, icon: '🚀' }
+        ];
+
+        function saveGameData() {
+            localStorage.setItem('boombob_wallet', wallet);
+            localStorage.setItem('boombob_inventory', JSON.stringify(inventory));
+            localStorage.setItem('boombob_equipped', JSON.stringify(equipped));
+        }
+
         // --- DİL SİSTEMİ ---
         let currentLang = localStorage.getItem('boombob_lang') || 'tr';
-
         const TEXTS = {
             tr: {
                 play: "OYNA", shop: "MAĞAZA 🛒", inventory: "ÇANTA 🎒", levels: "BÖLÜMLER 🗺️", settings: "AYARLAR ⚙️", back: "GERİ DÖN",
-                level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD",
+                level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
+                level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: MARS ROVER",
                 tutorial: "D-İLERİ  A-GERİ  SPACE-FREN", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
                 winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
@@ -476,11 +500,12 @@
                 langLabel: "DİL / LANGUAGE", suggTitle: "ÖNERİ YAP 💡", submit: "GÖNDER", empty: "Çantan bomboş...",
                 comingSoon: "GELECEK GÜNCELLEMEDE... 🚧", shopDrivers: "SÜRÜCÜLER", shopCars: "ARABALAR", shopAccessories: "AKSESUARLAR",
                 panic: "0 IQ OYNAYIŞ", ohno: "EYVAH 😱", broke: "PARASIZ EZİK!", next: "SONRAKİ LEVEL",
-                finishGame: "Tüm Leveller Bitti! Başa dönülüyor."
+                finishGame: "Tüm Leveller Bitti! Başa dönülüyor.", equip: "KUŞAN", equipped: "KUŞANDIN", buy: "SATIN AL"
             },
             en: {
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
+                level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: MARS ROVER",
                 tutorial: "D-GAS  A-BACK  SPACE-BRAKE", level3Msg: "NOW IT'S GETTING HARDER... 😈",
                 winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
@@ -488,61 +513,94 @@
                 langLabel: "LANGUAGE", suggTitle: "MAKE SUGGESTION 💡", submit: "SUBMIT", empty: "Inventory is empty...",
                 comingSoon: "COMING SOON... 🚧", shopDrivers: "DRIVERS", shopCars: "CARS", shopAccessories: "ACCESSORIES",
                 panic: "0 IQ GAMEPLAY", ohno: "OH NOO 😱", broke: "HAHA BROKE LOSER!", next: "NEXT LEVEL",
-                finishGame: "All Levels Completed! Returning to start."
+                finishGame: "All Levels Completed! Returning to start.", equip: "EQUIP", equipped: "EQUIPPED", buy: "BUY"
             }
         };
 
         function setLanguage(lang) {
             currentLang = lang;
-            localStorage.setItem('boombob_lang', lang); 
-            
+            localStorage.setItem('boombob_lang', lang);
             document.getElementById('btn-tr').classList.toggle('active', lang === 'tr');
             document.getElementById('btn-en').classList.toggle('active', lang === 'en');
             const t = TEXTS[lang];
-            
             const ids = {
                 'btn-start': t.play, 'btn-shop': t.shop, 'btn-inventory': t.inventory, 'btn-levels': t.levels, 'btn-settings': t.settings,
                 'title-shop': t.shopTitle, 'title-inventory': t.inventoryTitle, 'title-levels': t.levelsTitle, 'title-settings': t.settingsTitle,
-                'title-drivers': t.shopDrivers, 'title-cars': t.shopCars, 'title-accessories': t.shopAccessories,
-                'txt-soon1': t.comingSoon, 'txt-soon2': t.comingSoon, 'txt-soon3': t.comingSoon, 'txt-empty': t.empty,
                 'lvl-btn-1': t.level1Name + " - 140m", 'lvl-btn-2': t.level2Name + " - 100m", 'lvl-btn-3': t.level3Name + " - 200m",
+                'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 300m",
                 'lbl-lang': t.langLabel, 'btn-toggle-sugg': t.suggTitle, 'btn-submit': t.submit,
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
                 'title-gameover': t.gameOver, 'txt-skill': t.skillIssue, 'btn-retry': t.tryAgain, 'btn-menu1': t.mainMenu,
                 'title-win': t.winTitle, 'btn-next': t.next
             };
-            for (const [id, text] of Object.entries(ids)) {
-                const el = document.getElementById(id);
-                if(el) el.innerHTML = text; 
+            for (const [id, text] of Object.entries(ids)) { const el = document.getElementById(id); if(el) el.innerHTML = text; }
+            renderShop(); renderInventory();
+        }
+
+        function renderShop() {
+            const container = document.getElementById('shop-container');
+            container.innerHTML = '';
+            const categories = ['driver', 'car', 'accessory'];
+            const titles = { driver: TEXTS[currentLang].shopDrivers, car: TEXTS[currentLang].shopCars, accessory: TEXTS[currentLang].shopAccessories };
+
+            categories.forEach(cat => {
+                container.innerHTML += `<div class="shop-section-title">${titles[cat]}</div>`;
+                const grid = document.createElement('div'); grid.className = 'shop-grid';
+                SHOP_ITEMS.filter(i => i.type === cat).forEach(item => {
+                    const isOwned = inventory.includes(item.id);
+                    const div = document.createElement('div'); div.className = `shop-item ${isOwned ? 'owned' : ''}`;
+                    div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-price">${isOwned ? '✔️' : '🪙 ' + item.price}</div>`;
+                    if(!isOwned) div.onclick = () => buyItem(item);
+                    grid.appendChild(div);
+                });
+                container.appendChild(grid);
+            });
+        }
+
+        function buyItem(item) {
+            if(wallet >= item.price) {
+                wallet -= item.price; inventory.push(item.id); saveGameData();
+                document.getElementById('shop-balance').innerText = wallet; renderShop(); renderInventory();
+            } else {
+                const brokeMsg = document.getElementById('broke-message'); brokeMsg.classList.add('active');
+                setTimeout(() => brokeMsg.classList.remove('active'), 2000);
             }
         }
 
-        // Oyun Değişkenleri
-        let engine;
-        let car, driverHead;
+        function renderInventory() {
+            const container = document.getElementById('inventory-container'); container.innerHTML = '';
+            if(inventory.length === 0) { container.innerHTML = `<p style="font-size: 2rem; color: #D1D5DB;">${TEXTS[currentLang].empty}</p><div style="font-size: 6rem;">🕸️</div>`; return; }
+            const grid = document.createElement('div'); grid.className = 'shop-grid';
+            const allItems = [ { id: 'driver_default', type: 'driver', name: 'Bob', icon: '😐' }, { id: 'car_default', type: 'car', name: 'Kırmızı', icon: '🚗' }, ...SHOP_ITEMS.filter(i => inventory.includes(i.id)) ];
+            allItems.forEach(item => {
+                const isEquipped = equipped[item.type] === item.id;
+                const div = document.createElement('div'); div.className = `shop-item ${isEquipped ? 'equipped' : ''}`;
+                div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-status">${isEquipped ? TEXTS[currentLang].equipped : TEXTS[currentLang].equip}</div>`;
+                div.onclick = () => equipItem(item);
+                grid.appendChild(div);
+            });
+            container.appendChild(grid);
+        }
+
+        function equipItem(item) { equipped[item.type] = item.id; saveGameData(); renderInventory(); }
+
+        let engine, car, driverHead;
         let coins = [], particles = [];
-        let gameState = 'start';
-        let score = 0, level = 1;
-        let wallet = parseInt(localStorage.getItem('boombob_wallet')) || 0;
+        let gameState = 'start', score = 0, level = 1;
         let animationFrameId, cloudOffset = 0;
         let camera = { x: 0, y: 0 };
         let tutorialState = { A: false, D: false, Space: false };
         let isPaused = false;
 
-        const LEVEL_CONFIG = {
-            1: { targetDistance: 140 }, 2: { targetDistance: 100 }, 3: { targetDistance: 200 }
-        };
-
+        const LEVEL_CONFIG = { 1: { targetDistance: 140 }, 2: { targetDistance: 100 }, 3: { targetDistance: 200 }, 4: { targetDistance: 240 }, 5: { targetDistance: 300 } };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
         const headImg = new Image(); headImg.src = 'head.png';
         const canvas = document.getElementById('world');
         const ctx = canvas.getContext('2d');
-        canvas.width = GAME_WIDTH;
-        canvas.height = GAME_HEIGHT;
+        canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
 
-        // Başlangıç Ekranına Uçuşan Objeler Ekleme
         function createFloatingHeads() {
             const container = document.getElementById('start-screen');
             const existing = container.querySelectorAll('.floating-item');
@@ -550,52 +608,43 @@
             const existingHearts = container.querySelectorAll('.floating-heart');
             existingHearts.forEach(e => e.remove());
 
-            // Kafalar
+            // KAFALAR VE KALPLER İÇİN ORTAK "AŞAĞI DÜŞME" (fallDown) ANİMASYONU
             for(let i=0; i<30; i++) {
-                const img = document.createElement('img');
-                img.src = 'head.png';
-                img.className = 'floating-item';
-                img.style.left = Math.random() * 100 + '%';
-                img.style.top = -Math.random() * 20 + '%'; 
-                const size = 20 + Math.random() * 40;
-                img.style.width = size + 'px';
-                img.style.animationDuration = (5 + Math.random() * 10) + 's';
-                img.style.animationDelay = (Math.random() * 5) + 's';
+                const img = document.createElement('img'); img.src = 'head.png'; img.className = 'floating-item';
+                img.style.left = Math.random() * 100 + '%'; 
+                img.style.top = -(Math.random() * 50 + 10) + '%'; // Ekranın üstünde başla
+                img.style.width = (20+Math.random()*40)+'px'; 
+                img.style.animationDuration = (5+Math.random()*10)+'s'; img.style.animationDelay = (Math.random()*5)+'s';
                 container.appendChild(img);
             }
-            // Kalpler
             for(let i=0; i<20; i++) {
-                const div = document.createElement('div');
-                div.innerText = '❤️';
-                div.className = 'floating-heart';
-                div.style.fontSize = (20 + Math.random() * 30) + 'px';
-                div.style.left = Math.random() * 100 + '%';
-                div.style.top = -Math.random() * 20 + '%'; // Kalpler de yukarıdan başlasın
-                div.style.animationDuration = (4 + Math.random() * 6) + 's';
-                div.style.animationDelay = (Math.random() * 5) + 's';
+                const div = document.createElement('div'); div.innerText = '❤️'; div.className = 'floating-heart';
+                div.style.left = Math.random()*100+'%'; 
+                div.style.top = -(Math.random() * 50 + 10) + '%'; // Ekranın üstünde başla
+                div.style.animationDuration = (4+Math.random()*6)+'s'; div.style.animationDelay = (Math.random()*5)+'s';
                 container.appendChild(div);
             }
         }
 
-        // Klavye
+        // SAYFA YÜKLENDİĞİNDE EFEKTLERİ BAŞLAT
+        window.onload = function() {
+            setLanguage(currentLang); 
+            renderShop(); 
+            renderInventory();
+            createFloatingHeads(); // YÜKLENİNCE ÇAĞIR
+        };
+
         window.addEventListener('keydown', (e) => {
             if(e.code === 'Space') e.preventDefault();
             keys[e.code] = true;
             if(gameState === 'playing' && !isPaused && level === 1) {
-                if(e.code === 'KeyD') tutorialState.D = true;
-                if(e.code === 'KeyA') tutorialState.A = true;
-                if(e.code === 'Space') tutorialState.Space = true;
+                if(e.code === 'KeyD') tutorialState.D = true; if(e.code === 'KeyA') tutorialState.A = true; if(e.code === 'Space') tutorialState.Space = true;
                 if(tutorialState.A && tutorialState.D && tutorialState.Space) document.getElementById('tutorial-text').style.display = 'none';
             }
         });
         window.addEventListener('keyup', (e) => keys[e.code] = false);
 
-        // Menü Fonksiyonları
-        function toggleSuggestions() {
-            const box = document.getElementById('suggestions-box');
-            box.style.display = box.style.display === 'block' ? 'none' : 'block';
-        }
-
+        function toggleSuggestions() { const box = document.getElementById('suggestions-box'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; }
         function openScreen(name) {
             ['start','shop','inventory','levels','settings'].forEach(s => document.getElementById(s+'-screen').style.display = 'none');
             document.getElementById(name+'-screen').style.display = 'flex';
@@ -606,121 +655,61 @@
             document.getElementById('start-screen').style.display = 'flex';
         }
         function selectLevel(l) { level = l; closeScreens(); startGame(); }
-
-        function goToMenu() {
-            gameState = 'start';
-            isPaused = false;
-            if(animationFrameId) cancelAnimationFrame(animationFrameId);
-            if(engine) {
-                Matter.World.clear(engine.world);
-                Matter.Engine.clear(engine);
-            }
-            // Canvası temizle
-            ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            ctx.fillStyle = '#93C5FD';
-            ctx.fillRect(0,0, GAME_WIDTH, GAME_HEIGHT);
-            
-            updateUI('start');
-        }
-
-        function toggleInGameSettings() {
-            isPaused = !isPaused;
-            document.getElementById('ingame-settings-screen').style.display = isPaused ? 'flex' : 'none';
-        }
-
-        function openBugReport() {
-            alert("Bug Report: Henüz sunucu bağlantısı yok ama şikayetiniz not alındı! 📝");
-        }
+        function goToMenu() { gameState = 'start'; isPaused = false; if(animationFrameId) cancelAnimationFrame(animationFrameId); if(engine) { Matter.World.clear(engine.world); Matter.Engine.clear(engine); } ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.fillStyle = '#93C5FD'; ctx.fillRect(0,0, GAME_WIDTH, GAME_HEIGHT); updateUI('start'); }
+        function toggleInGameSettings() { isPaused = !isPaused; document.getElementById('ingame-settings-screen').style.display = isPaused ? 'flex' : 'none'; }
+        function openBugReport() { alert("Bug Report: Henüz sunucu bağlantısı yok ama şikayetiniz not alındı! 📝"); }
 
         function updateUI(state) {
-            // Tüm ekranları gizle
-            ['start-screen','shop-screen','inventory-screen','levels-screen','settings-screen','gameover-screen','win-screen','ingame-settings-screen'].forEach(id => {
-                const el = document.getElementById(id); if(el) el.style.display = 'none';
-            });
-            // HUD elemanlarını gizle
-            ['score-board','level-indicator','coin-counter','speedometer','tutorial-text','btn-ingame-settings','pedals-container'].forEach(id => {
-                const el = document.getElementById(id); if(el) el.style.display = 'none';
-            });
+            ['start-screen','shop-screen','inventory-screen','levels-screen','settings-screen','gameover-screen','win-screen','ingame-settings-screen'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+            ['score-board','level-indicator','coin-counter','speedometer','tutorial-text','btn-ingame-settings','pedals-container'].forEach(id => { document.getElementById(id).style.display = 'none'; });
+            document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active');
+            document.getElementById('level3-message').classList.remove('active'); document.getElementById('broke-message').classList.remove('active');
 
-            document.getElementById('panic-overlay').classList.remove('active');
-            document.getElementById('panic-message').classList.remove('active');
-            document.getElementById('level3-message').classList.remove('active');
-            document.getElementById('broke-message').classList.remove('active');
-
-            if (state === 'start') {
-                createFloatingHeads(); 
-                document.getElementById('start-screen').style.display = 'flex';
-            } else if (state === 'playing') {
-                document.getElementById('score-board').style.display = 'block';
-                document.getElementById('level-indicator').style.display = 'block';
-                document.getElementById('coin-counter').style.display = 'flex';
-                document.getElementById('speedometer').style.display = 'flex';
-                document.getElementById('btn-ingame-settings').style.display = 'block';
-                document.getElementById('pedals-container').style.display = 'flex';
-                
+            if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
+            else if (state === 'playing') {
+                document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
+                document.getElementById('coin-counter').style.display = 'flex'; document.getElementById('speedometer').style.display = 'flex';
+                document.getElementById('btn-ingame-settings').style.display = 'block'; document.getElementById('pedals-container').style.display = 'flex';
                 document.getElementById('coin-value').innerText = wallet;
                 document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
-                
                 if (level === 1 && (!tutorialState.A || !tutorialState.D || !tutorialState.Space)) document.getElementById('tutorial-text').style.display = 'block';
-                if (level === 3) {
-                    const l3m = document.getElementById('level3-message');
-                    l3m.classList.add('active'); setTimeout(() => l3m.classList.remove('active'), 4000);
-                }
+                if (level === 3) { const l3m = document.getElementById('level3-message'); l3m.classList.add('active'); setTimeout(() => l3m.classList.remove('active'), 4000); }
+                let bg = '#93C5FD'; if(level === 4) bg = '#1e1b4b'; if(level === 5) bg = '#7f1d1d'; document.getElementById('game-container').style.backgroundColor = bg;
             } else if (state === 'gameover') {
-                document.getElementById('gameover-screen').style.display = 'flex';
-                document.getElementById('final-score').innerText = score;
-                document.getElementById('final-coins').innerText = wallet;
+                document.getElementById('gameover-screen').style.display = 'flex'; document.getElementById('final-score').innerText = score; document.getElementById('final-coins').innerText = wallet;
             } else if (state === 'win') {
-                document.getElementById('win-screen').style.display = 'flex';
-                const t = TEXTS[currentLang];
-                let msg = t.win1; if(level === 2) msg = t.win2; if(level === 3) msg = t.win3;
-                document.getElementById('txt-win-msg').innerText = msg;
-                document.getElementById('win-level-text').innerText = (currentLang === 'tr' ? "LEVEL " + level + " TAMAMLANDI" : "LEVEL " + level + " COMPLETED");
+                document.getElementById('win-screen').style.display = 'flex'; const t = TEXTS[currentLang]; let msg = t.win1; if(level === 2) msg = t.win2; if(level >= 3) msg = t.win3;
+                document.getElementById('txt-win-msg').innerText = msg; document.getElementById('win-level-text').innerText = (currentLang === 'tr' ? "LEVEL " + level + " TAMAMLANDI" : "LEVEL " + level + " COMPLETED");
             }
         }
 
-        function startGame() {
-            gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = [];
-            tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 };
-            document.getElementById('score-board').innerText = `DIST: 0m`;
-            updateUI('playing');
-            if (animationFrameId) cancelAnimationFrame(animationFrameId);
-            setupPhysicsWorld(); gameLoop();
-        }
+        function startGame() { gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; document.getElementById('score-board').innerText = `DIST: 0m`; updateUI('playing'); if (animationFrameId) cancelAnimationFrame(animationFrameId); setupPhysicsWorld(); gameLoop(); }
+        function nextLevel() { if (LEVEL_CONFIG[level + 1]) { level++; gameState = 'start'; startGame(); } else { alert(TEXTS[currentLang].finishGame); level = 1; gameState = 'start'; updateUI('start'); } }
 
-        function nextLevel() {
-            if (LEVEL_CONFIG[level + 1]) { level++; gameState = 'start'; startGame(); }
-            else { alert(TEXTS[currentLang].finishGame); level = 1; gameState = 'start'; updateUI('start'); }
-        }
-
-        // --- FİZİK DÜNYASI ---
         function setupPhysicsWorld() {
             const Engine = Matter.Engine, World = Matter.World, Bodies = Matter.Bodies, Composite = Matter.Composite, Constraint = Matter.Constraint, Events = Matter.Events;
             if (engine) { Matter.World.clear(engine.world); Matter.Engine.clear(engine); } else { engine = Engine.create(); }
-            engine.positionIterations = 8; engine.velocityIterations = 8; engine.gravity.y = 1.5;
+            engine.positionIterations = 8; engine.velocityIterations = 8; engine.gravity.y = (level === 4) ? 0.5 : 1.5;
             const world = engine.world;
-
             const CAT_CAR = 0x0002, CAT_GROUND = 0x0004, CAT_DRIVER = 0x0008, CAT_COIN = 0x0010, CAT_FINISH = 0x0020;
             const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
 
-            // GİZLİ DUVAR (Arkaya düşmeyi engeller) - YERİ GÜNCELLENDİ (X=50)
-            const startWall = Bodies.rectangle(50, 0, 100, 10000, { isStatic: true, render: { visible: false } });
-            Composite.add(world, startWall);
+            // GİZLİ DUVAR (Arkaya düşmeyi engeller) - YERİ GÜNCELLENDİ (X=-100)
+            const startWall = Bodies.rectangle(-100, 0, 200, 20000, { isStatic: true, render: { visible: false } }); Composite.add(world, startWall);
 
-            // Zemin
-            const terrainBodies = []; let x = 0; let y = GAME_HEIGHT * 0.7; const segmentWidth = 60; const maxSegments = 600;
+            const terrainBodies = []; let x = 0; let y = GAME_HEIGHT * 0.7; const segmentWidth = 60; const maxSegments = 800;
             for (let i = 0; i < maxSegments; i++) {
                 let change = 0;
                 if (i > 10) {
                     if (level === 1) { change = Math.sin(i * 0.05) * 20 + Math.sin(i * 0.1) * 20; }
                     else if (level === 2) { change = Math.sin(i * 0.1) * 30 + Math.sin(i * 0.2) * 40; if (i % 50 > 40) change -= 50; }
                     else if (level === 3) { change = Math.sin(i * 0.15) * 40 + Math.sin(i * 0.25) * 20; if (i % 40 > 30) change += 40; if (i % 60 > 50) change -= 30; }
+                    else if (level === 4) { if(i % 15 > 10) { x += segmentWidth; continue; } change = Math.sin(i * 0.1) * 30; }
+                    else if (level === 5) { change = Math.sin(i * 0.2) * 60 + Math.random() * 20; }
                 }
-                const nextY = (GAME_HEIGHT * 0.7) + change;
-                const angle = Math.atan2(nextY - y, segmentWidth);
+                const nextY = (GAME_HEIGHT * 0.7) + change; const angle = Math.atan2(nextY - y, segmentWidth);
                 const ground = Bodies.rectangle(x + segmentWidth / 2, (y + nextY) / 2 + 300, segmentWidth + 80, 600, { isStatic: true, friction: 0.8, angle: angle, label: 'ground', collisionFilter: { category: CAT_GROUND } });
                 terrainBodies.push(ground);
-
                 if (i > 10 && i % 6 === 0 && Math.random() > 0.3) {
                     const coinX = x + segmentWidth / 2; const coinY = (y + nextY) / 2 - 50;
                     const coinValue = (level > 1) ? 10 : 1; const coinRadius = (level > 1) ? 18 : 14;
@@ -732,15 +721,15 @@
             Composite.add(world, terrainBodies);
 
             const finishX = config.targetDistance * 100;
-            const finishLine = Bodies.rectangle(finishX, 200, 50, 2000, { isStatic: true, isSensor: true, label: 'finish', collisionFilter: { category: CAT_FINISH } });
+            const finishLine = Bodies.rectangle(finishX, 200, 50, 5000, { isStatic: true, isSensor: true, label: 'finish', collisionFilter: { category: CAT_FINISH } });
             Composite.add(world, finishLine);
 
             const startX = 200; const startY = GAME_HEIGHT * 0.5;
             const chassis = Bodies.rectangle(startX, startY, 130, 40, { density: 0.004, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } });
             const wheelRadius = 18; 
             const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
-            // Tekerlek Aralığı (40 olarak ayarlandı - Dengeli)
-            const wheelOffset = 40; 
+            // Tekerlek Aralığı (45: Hafif Ayrık)
+            const wheelOffset = 45; 
             const wheelBack = Bodies.circle(startX - wheelOffset, startY + 30, wheelRadius, wheelOptions);
             const wheelFront = Bodies.circle(startX + wheelOffset, startY + 30, wheelRadius, wheelOptions);
             const suspensionOptions = { bodyA: chassis, stiffness: 0.08, damping: 0.5, length: 0 };
@@ -770,45 +759,25 @@
         function gameLoop() {
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
-                
-                // OTO IŞINLANMA (DÜŞME KONTROLÜ)
                 if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
-                    Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 });
-                    Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 });
-                    Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 });
-                    Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 });
-                    Matter.Body.setAngularVelocity(car.chassis, 0);
+                    Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); Matter.Body.setAngularVelocity(car.chassis, 0);
                 }
+                const MAX_SPEED = equipped.accessory === 'acc_turbo' ? 0.8 : 0.5; 
+                if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
+                const speedRaw = Math.abs(car.wheelBack.angularVelocity); const displaySpeed = Math.min(Math.round(speedRaw * 60), 30);
+                document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / 30) * 100, 100) + '%';
 
-                const MAX_SPEED = 0.5;
-                if (car && car.chassis) {
-                    camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3;
-                    camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6;
-                }
-                const speedRaw = Math.abs(car.wheelBack.angularVelocity);
-                const displaySpeed = Math.min(Math.round(speedRaw * 60), 30);
-                document.getElementById('speed-value').innerText = displaySpeed;
-                document.getElementById('speed-bar').style.width = Math.min((displaySpeed / 30) * 100, 100) + '%';
-
-                // Pedal Animasyonları
-                const gasPedal = document.getElementById('gas-pedal');
-                const brakePedal = document.getElementById('brake-pedal');
-                
+                const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
                 if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
                 if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
 
-                if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) {
-                    const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc);
-                }
-                if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) {
-                    const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc);
-                }
+                if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
+                if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
                 if (keys['Space']) {
                     Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
                 }
                 if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
 
-                // Particles
                 if (Math.abs(car.wheelBack.angularVelocity) > 0.1) {
                     const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; const dirtY = car.wheelBack.position.y + 15;
                     if(Math.random() > 0.5) particles.push({ x: dirtX, y: dirtY, vx: (Math.random() - 0.5) * 4 - 2, vy: -Math.random() * 3 - 1, life: 1.0, type: 'dirt' });
@@ -816,8 +785,7 @@
                     if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
                 }
                 for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; if (p.life <= 0) particles.splice(i, 1); }
-                const dist = Math.floor(car.chassis.position.x / 100);
-                if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
+                const dist = Math.floor(car.chassis.position.x / 100); if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
             }
             draw();
             if (gameState !== 'stop') animationFrameId = requestAnimationFrame(gameLoop);
@@ -826,8 +794,18 @@
         function draw() {
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.save();
             ctx.translate(camera.x, camera.y);
-            ctx.fillStyle = '#87CEEB'; ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
+            ctx.fillStyle = level === 5 ? '#7f1d1d' : (level === 4 ? '#1e1b4b' : '#87CEEB');
+            ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
             if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
+            
+            if(level === 5) {
+                const time = Date.now() / 1000;
+                for(let i=0; i<5; i++) {
+                    const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200);
+                    const uy = -camera.y + 100 + Math.sin(time + i) * 50;
+                    ctx.font = "40px Arial"; ctx.fillText("🛸", ux, uy);
+                }
+            }
 
             if (engine) {
                 const bodies = Matter.Composite.allBodies(engine.world);
@@ -837,7 +815,6 @@
                 ctx.save(); ctx.translate(finishX, 400); 
                 for(let i=0; i<10; i++) { ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#000000'; ctx.fillRect(-10, 0, 40, 20); }
                 ctx.fillStyle = '#C0C0C0'; ctx.fillRect(20, -200, 5, 200);
-                
                 ctx.fillStyle = level === 3 ? '#FFD700' : (level === 2 ? '#3B82F6' : '#EF4444');
                 ctx.beginPath(); ctx.moveTo(25, -200); ctx.lineTo(80, -180); ctx.lineTo(25, -160); ctx.fill();
                 for(let r=0; r<2; r++) for(let c=0; c<3; c++) { ctx.fillStyle = (r+c)%2===0?'black':'white'; ctx.fillRect(25+c*10, -160+r*10, 10, 10); }
@@ -846,14 +823,13 @@
                 bodies.forEach(body => {
                     if (body.label === 'ground') {
                         ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
-                        ctx.beginPath(); ctx.rect(-70, -300, 140, 600); ctx.fillStyle = '#5D4037'; ctx.fill();
-                        ctx.beginPath(); ctx.rect(-70, -300, 140, 20); ctx.fillStyle = '#4CAF50'; ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = '#2E7D32'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+                        ctx.beginPath(); ctx.rect(-70, -300, 140, 600); ctx.fillStyle = level === 5 ? '#520404' : '#5D4037'; ctx.fill();
+                        ctx.beginPath(); ctx.rect(-70, -300, 140, 20); ctx.fillStyle = level === 5 ? '#991b1b' : (level === 4 ? '#94a3b8' : '#4CAF50'); ctx.fill();
+                        ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
                     } else if (body.label === 'coin') {
                         ctx.save(); ctx.translate(body.position.x, body.position.y);
                         const value = body.coinValue || 1; const time = Date.now() / 200; const scaleX = Math.sin(time); 
-                        ctx.scale(scaleX, 1); ctx.beginPath();
-                        const radius = value === 10 ? 18 : 14; ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                        ctx.scale(scaleX, 1); ctx.beginPath(); const radius = value === 10 ? 18 : 14; ctx.arc(0, 0, radius, 0, Math.PI * 2);
                         if (value === 10) { ctx.fillStyle = '#FFD700'; ctx.strokeStyle = '#B8860B'; } else { ctx.fillStyle = '#C0C0C0'; ctx.strokeStyle = '#808080'; }
                         ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
                         ctx.fillStyle = value === 10 ? '#B8860B' : '#696969'; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(value, 0, 1); ctx.restore();
@@ -874,13 +850,17 @@
                         ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,wheelRad); ctx.stroke();
                         ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-wheelRad); ctx.stroke(); ctx.restore();
                     });
+
                     ctx.save(); ctx.translate(car.chassis.position.x, car.chassis.position.y); ctx.rotate(car.chassis.angle);
-                    if (carImg.complete && carImg.naturalWidth !== 0) { ctx.drawImage(carImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } ctx.restore();
+                    if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
+                    if (carImg.complete && carImg.naturalWidth !== 0) { ctx.drawImage(carImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
+                    ctx.restore(); 
 
                     if (driverHead) {
                         ctx.save(); ctx.translate(driverHead.position.x, driverHead.position.y); ctx.rotate(car.chassis.angle); 
+                        if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
                         if (headImg.complete && headImg.naturalWidth !== 0) {
-                            ctx.drawImage(headImg, -25, -25, 50, 50);
+                            ctx.drawImage(headImg, -25, -25, 50, 50); ctx.filter = 'none';
                             let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
                             if (Math.abs(angle) > 1.0) {
                                 document.getElementById('panic-overlay').classList.add('active'); document.getElementById('panic-message').classList.add('active');
@@ -904,9 +884,7 @@
             }
         }
 
-        // Başlangıçta Dili Ayarla
-        setLanguage(currentLang);
-        createFloatingHeads(); // İlk başta kafalar olsun
+        setLanguage(currentLang); renderShop(); renderInventory();
     </script>
 </body>
 </html>
