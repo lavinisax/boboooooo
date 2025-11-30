@@ -501,6 +501,7 @@
         let isBoosting = false;
         let boostCooldownTimer = 0;
         let boostFuel = 100;
+        let spawnInvincibility = false; // Level 5 başlangıç koruması
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', name: 'Tekne', price: 600, icon: '🚤' },
@@ -747,6 +748,17 @@
             else if (state === 'playing') {
                 document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
                 document.getElementById('coin-counter').style.display = 'flex'; document.getElementById('speedometer').style.display = 'flex';
+                
+                // --- BOOST VISIBILITY CHECK ---
+                if (equipped.car === 'car_boat') {
+                    document.getElementById('boost-label').style.display = 'block';
+                    document.getElementById('boost-bar-container').style.display = 'block';
+                } else {
+                    document.getElementById('boost-label').style.display = 'none';
+                    document.getElementById('boost-bar-container').style.display = 'none';
+                }
+                // ------------------------------
+
                 document.getElementById('btn-ingame-settings').style.display = 'block'; document.getElementById('pedals-container').style.display = 'flex';
                 document.getElementById('coin-value').innerText = wallet;
                 document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
@@ -765,23 +777,26 @@
         function startGame() { 
             if(gameState === 'playing') return;
             
-            // --- GÜNCELLEME: TEKNE KONTROLÜ (ÇOKLU DİL DESTEĞİ İLE) ---
+            // TEKNE KONTROLÜ
             if (level !== 5 && equipped.car === 'car_boat') {
-                // Seçili dile göre uyarı ver
                 alert(TEXTS[currentLang].boatBan);
-                
-                // Arabayı değiştir
                 equipped.car = 'car_default';
-                
-                // Değişikliği kaydet ve UI'ı güncelle
                 saveGameData(); 
                 renderInventory();
             }
-            // -----------------------------------------------------------
 
             gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; 
             tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
-            boostFuel = 100; // Boost sıfırla
+            boostFuel = 100; 
+            spawnInvincibility = false; 
+
+            // --- LEVEL 5 START ANIMATION SETUP ---
+            if (level === 5) {
+                spawnInvincibility = true; // İlk düşüşte ölmemesi için
+                setTimeout(() => { spawnInvincibility = false; }, 2000); // 2 saniye koruma
+            }
+            // -------------------------------------
+
             document.getElementById('score-board').innerText = `DIST: 0m`; 
             updateUI('playing'); 
             if (animationFrameId) cancelAnimationFrame(animationFrameId); 
@@ -799,7 +814,6 @@
             const CAT_CAR = 0x0002, CAT_GROUND = 0x0004, CAT_DRIVER = 0x0008, CAT_COIN = 0x0010, CAT_FINISH = 0x0020;
             const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
 
-            // GİZLİ DUVAR
             const startWall = Bodies.rectangle(-200, 0, 200, 20000, { isStatic: true, render: { visible: false } }); Composite.add(world, startWall);
 
             const terrainBodies = []; let x = 0; let y = GAME_HEIGHT * 0.7; const segmentWidth = 60; const maxSegments = 800;
@@ -810,22 +824,28 @@
                     else if (level === 2) { change = Math.sin(i * 0.1) * 30 + Math.sin(i * 0.2) * 40; if (i % 50 > 40) change -= 50; }
                     else if (level === 3) { change = Math.sin(i * 0.15) * 40 + Math.sin(i * 0.25) * 20; if (i % 40 > 30) change += 40; if (i % 60 > 50) change -= 30; }
                     else if (level === 4) { if(i % 15 > 10) { x += segmentWidth; continue; } change = Math.sin(i * 0.1) * 30; }
-                    else if (level === 5) { change = Math.sin(i * 0.1) * 10; } 
+                    
+                    // --- LEVEL 5 HARDER WAVES ---
+                    else if (level === 5) { change = Math.sin(i * 0.15) * 30; } // Increased wave height
+                    // ----------------------------
                 }
                 const nextY = (GAME_HEIGHT * 0.7) + change; const angle = Math.atan2(nextY - y, segmentWidth);
                 
                 const isWater = level === 5; const isBoat = equipped.car === 'car_boat';
                 const groundOptions = { isStatic: true, friction: 0.8, angle: angle, label: 'ground', collisionFilter: { category: CAT_GROUND } };
                 if (isWater) {
-                     // SU İÇİN DEĞİŞİKLİK: HERKES İÇİN SENSOR (Fiziksel çarpışma yok)
-                     // Tekne kodla yüzdürülecek, araba kodla batırılacak.
                      groundOptions.isSensor = true; 
                 }
                 
                 const ground = Bodies.rectangle(x + segmentWidth / 2, (y + nextY) / 2 + 300, segmentWidth + 80, 600, groundOptions);
                 terrainBodies.push(ground);
                 if (i > 10 && i % 6 === 0 && Math.random() > 0.3) {
-                    const coinX = x + segmentWidth / 2; const coinY = (y + nextY) / 2 - 50;
+                    // --- COIN POSITIONING FIX ---
+                    let coinY = (y + nextY) / 2 - 50;
+                    if (level === 5) coinY += 150; // Push coins deeper into water
+                    // ----------------------------
+
+                    const coinX = x + segmentWidth / 2;
                     const coinValue = (level > 1) ? 10 : 1; const coinRadius = (level > 1) ? 18 : 14;
                     const coin = Bodies.circle(coinX, coinY, coinRadius, { isStatic: true, isSensor: true, label: 'coin', coinValue: coinValue, collisionFilter: { category: CAT_COIN } });
                     coins.push(coin); Composite.add(world, coin);
@@ -838,13 +858,22 @@
             const finishLine = Bodies.rectangle(finishX, 200, 50, 5000, { isStatic: true, isSensor: true, label: 'finish', collisionFilter: { category: CAT_FINISH } });
             Composite.add(world, finishLine);
 
-            const startX = 200; const startY = GAME_HEIGHT * 0.5;
+            // --- SPAWN LOGIC UPDATE ---
+            let startX = 200; 
+            let startY = GAME_HEIGHT * 0.5;
+            
+            // Level 5: Spawn on water surface, further back to simulate "sailing in"
+            if (level === 5) {
+                startX = -150; 
+                startY = GAME_HEIGHT * 0.7; 
+            }
+            // --------------------------
+
             const chassis = Bodies.rectangle(startX, startY, 130, 40, { density: 0.004, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } });
             const wheelRadius = 18; 
             const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
             const wheelOffset = 35; 
             
-            // Tekne ise tekerlek oluşturma
             const isBoat = equipped.car === 'car_boat';
             let wheelBack, wheelFront, shockBack, shockFront;
 
@@ -863,6 +892,11 @@
             if (!isBoat) Composite.add(world, [wheelBack, wheelFront, shockBack, shockFront]); 
 
             car = { chassis, wheelBack, wheelFront }; driverHead = headBody;
+            
+            // --- LEVEL 5 INITIAL PUSH ---
+            if (level === 5) {
+                Matter.Body.setVelocity(chassis, { x: 8, y: 0 }); // Sahneye giriş yapsın
+            }
 
             Events.on(engine, 'collisionStart', (event) => {
                 const pairs = event.pairs;
@@ -870,28 +904,17 @@
                     const { bodyA, bodyB } = pairs[i];
                     const labels = [bodyA.label, bodyB.label];
                     
-                    // Game Over (Head Collision)
+                    // --- GAME OVER LOGIC (HEAD TOUCH) ---
                     if (labels.includes('driverHead') && labels.includes('ground')) { 
-                        // Lvl 5'te suyun içine kafa girince ölünmez, sadece araba batarsa ölünür.
-                        // Diğer levellerde kafa yere değerse ölürsün.
-                        if(level !== 5) {
-                            gameState = 'gameover'; updateUI('gameover'); 
-                        } else {
-                            // Level 5'teyiz, tekne ters dönerse?
-                            // Tekne ise ve ters döndüyse (kafa suya girdiyse) ÖLSÜN.
-                            // Yani Level 5'te "Head hitting water" = DEATH is what user requested now.
-                            // User said: "TEKNE TERS DONERSE DE OLURUZ"
-                            
-                            // BUT ALSO: The user said "boat.png yani tekne de level 5i acinca ki, olmamasi lazim, oluyoruz"
-                            // Wait, if the boat is just floating and head touches water (sensor), collisionStart might still fire?
-                            // Since ground is sensor in level 5, collisionStart fires but no physical response.
-                            // So we should ONLY trigger game over if level !== 5.
-                            // UNLESS the boat flips over completely?
-                            
-                            // Let's disable head-water collision death for Level 5 entirely to be safe as requested "tekne de ise olmememiz lazim"
-                             // (Unless they sink too deep which is handled in gameLoop)
+                        // Level 5 olsa bile kafa suya değerse ölürsün.
+                        // ANCAK: Başlangıçtaki spawnInvincibility aktifse ölmezsin.
+                        if (!spawnInvincibility) {
+                            gameState = 'gameover'; 
+                            updateUI('gameover');
                         }
                     }
+                    // ------------------------------------
+
                     if ( (bodyA.label === 'coin' && (bodyB.label === 'chassis' || bodyB.label === 'wheel')) || (bodyB.label === 'coin' && (bodyA.label === 'chassis' || bodyA.label === 'wheel')) ) {
                         const coinBody = bodyA.label === 'coin' ? bodyA : bodyB;
                         Matter.Composite.remove(engine.world, coinBody);
@@ -927,7 +950,7 @@
                 
                 // Level 5 Buoyancy (Boat Only)
                 if (level === 5 && equipped.car === 'car_boat') {
-                    const waterLevel = (GAME_HEIGHT * 0.7) + Math.sin((car.chassis.position.x / 60) * 0.1) * 10;
+                    const waterLevel = (GAME_HEIGHT * 0.7) + Math.sin((car.chassis.position.x / 60) * 0.1) * 30; // Matches new wave height
                     if (car.chassis.position.y > waterLevel) {
                         const depth = car.chassis.position.y - waterLevel;
                         Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0, y: -0.008 * depth });
@@ -948,42 +971,39 @@
                 const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
                 document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
 
-                // BOOST RECHARGE LOGIC
-                if (keys['Shift'] && canBoost && boostFuel > 0) {
-                    isBoosting = true;
-                    boostFuel -= 0.5; // Deplete fuel (approx 3.3s at 60fps, tweaked to 5s needs slower drain)
-                    // 5s = 300 frames. 100 / 300 = 0.33 per frame.
-                    // Let's make it exact 5s:
-                    boostFuel = Math.max(0, boostFuel - (100/300)); 
-                } else {
-                    isBoosting = false;
-                }
-
-                if (boostFuel <= 0 && canBoost) {
-                    canBoost = false; // Start cooldown
-                    boostCooldownTimer = 300; // 5 seconds cooldown
-                }
-
-                if (!canBoost) {
-                    boostCooldownTimer--;
-                    // --- GÜNCELLEME: BOOST GÖRSEL DOLUM ---
-                    let pct = 100 - (boostCooldownTimer / 300 * 100);
-                    document.getElementById('boost-bar').style.width = pct + '%';
-                    document.getElementById('boost-label').innerText = "SOĞUTULUYOR... " + Math.floor(pct) + "%";
-
-                    if (boostCooldownTimer <= 0) {
-                        canBoost = true;
-                        boostFuel = 100; // Refill instantly
-                        document.getElementById('boost-label').innerText = "BOOST (SHIFT)";
+                // --- BOOST LOGIC (ONLY FOR BOAT) ---
+                if (equipped.car === 'car_boat') {
+                    if (keys['Shift'] && canBoost && boostFuel > 0) {
+                        isBoosting = true;
+                        boostFuel = Math.max(0, boostFuel - (100/300)); 
+                    } else {
+                        isBoosting = false;
                     }
-                }
 
-                // Boost Bar Visuals
-                const boostBar = document.getElementById('boost-bar');
-                if(canBoost) boostBar.style.width = boostFuel + '%';
-                
-                if (!canBoost) boostBar.style.backgroundColor = '#EF4444'; // Red when cooling down
-                else boostBar.style.backgroundColor = '#FACC15'; // Yellow when ready
+                    if (boostFuel <= 0 && canBoost) {
+                        canBoost = false; 
+                        boostCooldownTimer = 300; 
+                    }
+
+                    if (!canBoost) {
+                        boostCooldownTimer--;
+                        let pct = 100 - (boostCooldownTimer / 300 * 100);
+                        document.getElementById('boost-bar').style.width = pct + '%';
+                        document.getElementById('boost-label').innerText = "SOĞUTULUYOR... " + Math.floor(pct) + "%";
+
+                        if (boostCooldownTimer <= 0) {
+                            canBoost = true;
+                            boostFuel = 100;
+                            document.getElementById('boost-label').innerText = "BOOST (SHIFT)";
+                        }
+                    }
+                    // Bar Width Update
+                    const boostBar = document.getElementById('boost-bar');
+                    if(canBoost) boostBar.style.width = boostFuel + '%';
+                    if (!canBoost) boostBar.style.backgroundColor = '#EF4444'; 
+                    else boostBar.style.backgroundColor = '#FACC15'; 
+                }
+                // -----------------------------------
 
                 const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
                 if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
@@ -1001,17 +1021,15 @@
                      if (keys['KeyD']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0.03, y: 0 }); // DAHA HIZLI (0.03)
                      if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.01, y: 0 });
                      
-                     // BOOST
+                     // BOOST (Only works if boat is equipped and boosting)
                      if (isBoosting) {
-                         Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0.05, y: 0 }); // Extra speed
+                         Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0.05, y: 0 }); 
                      }
                 }
                 
-                // --- GÜNCELLEME: W TUŞU TEKNE İÇİN KAPALI ---
                 if (keys['KeyW'] && equipped.car !== 'car_boat') { 
                     Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); 
                 }
-                // --------------------------------------------
 
                 // Particles
                 if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
@@ -1037,7 +1055,7 @@
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
             if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
             
-            // --- GÜNCELLEME: LEVEL 5 BALIKLARI ---
+            // --- LEVEL 5 FISH VISIBILITY FIX ---
             if(level === 5) { 
                 const time = Date.now() / 1000; 
                 // Kuşlar
@@ -1046,20 +1064,20 @@
                     const uy = -camera.y + 100 + Math.sin(time + i) * 50; 
                     ctx.font = "40px Arial"; ctx.fillText("🐦", ux, uy); 
                 } 
-                // Balıklar (Hareketli ve daha yukarıda)
+                // Balıklar (Daha yukarıda - Surface level)
                 for(let i=0; i<15; i++) { 
                     let speed = (time * 100) + (i * 50);
                     let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
                     if(fx < -100) fx += (GAME_WIDTH + 1000); 
                     
-                    // Yükseklik ayarı: "250" değeri balıkları yukarı taşır.
-                    let fy = -camera.y + 250 + (i * 40) + Math.sin(time * 2 + i) * 30; 
+                    // Yükseklik ayarı: 100 değeri balıkları su yüzeyine yakın gösterir
+                    let fy = -camera.y + 100 + (i * 40) + Math.sin(time * 2 + i) * 30; 
                     
                     ctx.font = (20 + (i%3)*5) + "px Arial";
                     ctx.fillText("🐟", fx, fy); 
                 } 
             }
-            // -------------------------------------
+            // -----------------------------------
 
             if (engine) {
                 const bodies = Matter.Composite.allBodies(engine.world);
