@@ -47,7 +47,7 @@
             overflow: hidden;
         }
 
-        /* ARKA PLAN EFEKTLERİ (YAĞMUR GİBİ) */
+        /* ARKA PLAN EFEKTLERİ */
         .floating-item, .floating-heart {
             position: absolute;
             pointer-events: none;
@@ -92,7 +92,7 @@
         
         @keyframes shakeTitle {
             0%, 100% { transform: rotate(-3deg) scale(1); }
-            50% { transform: rotate(3deg) scale(1.1); } 
+            50% { transform: rotate(3deg) scale(1.05); }
         }
 
         .subtitle {
@@ -196,7 +196,7 @@
             display: flex; flex-direction: column; align-items: center; justify-content: space-between;
         }
         .shop-item:hover { transform: scale(1.05); background: #4B5563; border-color: #FACC15; }
-        .shop-item.owned { border-color: #4ADE80; background: #1F2937; opacity: 0.7; cursor: default; }
+        .shop-item.owned { display: none !important; } 
         .shop-item.equipped { border-color: #FACC15; background: #374151; opacity: 1; box-shadow: 0 0 10px #FACC15; }
         
         .item-icon { font-size: 2.5rem; margin-bottom: 5px; }
@@ -258,19 +258,22 @@
 
         #speedometer {
             position: absolute; bottom: 2rem; right: 2rem;
-            width: 150px; height: 80px;
+            width: 160px;
             background: linear-gradient(180deg, #1F2937 0%, #111827 100%);
-            border: 4px solid #4B5563; border-radius: 1rem 1rem 0 0;
-            display: none; flex-direction: column; align-items: center; justify-content: flex-end;
-            padding-bottom: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.5); z-index: 40;
+            border: 4px solid #4B5563; border-radius: 1rem;
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            padding: 10px; box-shadow: 0 0 15px rgba(0,0,0,0.5); z-index: 40;
         }
-        #speed-bar-container { width: 80%; height: 8px; background: #374151; border-radius: 4px; margin-bottom: 5px; overflow: hidden; }
+        #speed-bar-container { width: 90%; height: 8px; background: #374151; border-radius: 4px; margin-bottom: 5px; overflow: hidden; }
         #speed-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #4ADE80, #FACC15, #EF4444); transition: width 0.1s linear; }
+        #boost-bar-container { width: 90%; height: 8px; background: #374151; border-radius: 4px; margin-bottom: 5px; overflow: hidden; }
+        #boost-bar { width: 100%; height: 100%; background: #FACC15; transition: width 0.1s linear; }
+        #boost-label { font-size: 0.7rem; color: #FACC15; font-weight: bold; margin-bottom: 2px; }
         #speed-value { font-family: monospace; font-size: 2rem; font-weight: 900; color: #EF4444; line-height: 1; }
         #speed-unit { font-size: 0.7rem; color: #9CA3AF; font-weight: bold; margin-top: -5px; }
 
         /* Mesajlar */
-        #panic-message, #broke-message {
+        #panic-message, #broke-message, #dumb-message {
             position: absolute; top: 20%; right: -500px;
             background-color: #FEF08A; color: #DC2626; border: 4px solid #EF4444;
             padding: 1.5rem; font-family: 'Comic Sans MS', sans-serif; font-weight: 900;
@@ -279,8 +282,11 @@
         }
         #panic-message.active { right: 50px; }
         
-        #broke-message { top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s; right: auto; pointer-events: none;}
+        #broke-message { top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); transition: transform 0.2s; right: auto; pointer-events: none; z-index: 100;}
         #broke-message.active { transform: translate(-50%, -50%) scale(1) rotate(-10deg); }
+
+        #dumb-message { top: 40%; right: 50%; transform: translate(50%, -50%) rotate(5deg); display:none; z-index: 100; }
+        #dumb-message.active { display: block; right: 50%; }
 
         #level3-message {
             position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) scale(0);
@@ -300,7 +306,6 @@
         #panic-overlay { position: absolute; inset: 0; background: rgba(255,0,0,0); pointer-events: none; transition: background 0.2s; z-index: 35; }
         #panic-overlay.active { background: rgba(255,0,0,0.3); }
 
-        /* Credits */
         .credits {
             position: absolute; bottom: 10px; right: 15px;
             font-family: 'Comic Sans MS', sans-serif; font-size: 0.9rem;
@@ -320,6 +325,7 @@
         <div id="panic-overlay"></div>
         <div id="panic-message"><span id="txt-panic-iq">0 IQ OYNAYIŞ</span><br><span style="font-size: 3rem;" id="txt-panic-ohno">EYVAH 😱</span></div>
         <div id="broke-message"><span id="txt-broke">PARASIZ EZİK!</span><br>😂 💸</div>
+        <div id="dumb-message" style="font-size:3rem; color:red; border: 4px solid red; background:#000; padding:20px; border-radius:20px; font-weight:bold; color:white;">ARE U DUMB? 🌊</div>
         <div id="level3-message">NOW IT'S GETTING HARDER... 😈</div>
         <div id="tutorial-text">D - İLERİ<br>A - GERİ<br>SPACE - FREN</div>
 
@@ -335,6 +341,8 @@
         <div id="level-indicator">LEVEL 1</div>
         <div id="coin-counter">🪙 <span id="coin-value">0</span></div>
         <div id="speedometer">
+            <div id="boost-label">BOOST (SHIFT)</div>
+            <div id="boost-bar-container"><div id="boost-bar"></div></div>
             <div id="speed-bar-container"><div id="speed-bar"></div></div>
             <div id="speed-value">0</div>
             <div id="speed-unit">km/h</div>
@@ -403,8 +411,8 @@
                     <span class="level-info">240m</span>
                 </button>
                 <button class="level-btn" onclick="selectLevel(5)">
-                    <span id="lvl-btn-5">LEVEL 5: MARS ROVER</span>
-                    <span class="level-info">300m</span>
+                    <span id="lvl-btn-5">LEVEL 5: OCEAN LEVEL</span>
+                    <span class="level-info">???</span>
                 </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
@@ -430,6 +438,9 @@
                 <div class="settings-section">
                      <button class="btn-bug" onclick="openBugReport()" id="btn-bug">BUG REPORT 🐞</button>
                 </div>
+                <div class="settings-section">
+                    <button class="btn-reset" style="background:black; border:1px solid red; color:red; font-size:0.8rem;" onclick="resetGameData()">VERİLERİ SIFIRLA ⚠️</button>
+                </div>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back4">GERİ DÖN</button>
         </div>
@@ -446,6 +457,8 @@
             <h2 id="title-gameover">ÖLDÜN</h2>
             <p style="font-size: 2rem; color: #E5E7EB; margin-bottom: 2rem; font-style: italic;" id="txt-skill">KOLSUZLUK...</p>
             <p style="font-size: 3rem; margin-bottom: 2rem; font-weight: bold; color: #FACC15;">Skor: <span id="final-score">0</span>m</p>
+            <p style="font-size: 1.5rem; margin-bottom: 2rem; font-weight: bold; color: #FACC15;">Kazanılan: 🪙 <span id="final-coins">0</span></p>
+            
             <button class="btn-start" onclick="startGame()" id="btn-retry">TEKRAR DENE</button>
             <button class="btn-shop" style="margin-top: 20px;" onclick="goToMenu()" id="btn-menu1">ANA MENÜ</button>
         </div>
@@ -468,11 +481,29 @@
         });
 
         // --- DATA SİSTEMİ ---
-        let wallet = parseInt(localStorage.getItem('boombob_wallet')) || 0;
-        let inventory = JSON.parse(localStorage.getItem('boombob_inventory')) || ['driver_default', 'car_default'];
-        let equipped = JSON.parse(localStorage.getItem('boombob_equipped')) || { driver: 'driver_default', car: 'car_default', accessory: null };
+        let wallet = 0;
+        try { wallet = parseInt(localStorage.getItem('boombob_wallet')) || 0; } catch(e){ wallet = 0; }
+        
+        let inventory = ['driver_default', 'car_default'];
+        try { 
+            const savedInv = JSON.parse(localStorage.getItem('boombob_inventory'));
+            if(Array.isArray(savedInv)) inventory = savedInv;
+        } catch(e) { console.log("Inv error reset"); }
+
+        let equipped = { driver: 'driver_default', car: 'car_default', accessory: null };
+        try {
+            const savedEq = JSON.parse(localStorage.getItem('boombob_equipped'));
+            if(savedEq) equipped = savedEq;
+        } catch(e) { console.log("Eq error reset"); }
+        
+        // BOOST VARIABLES
+        let canBoost = true;
+        let isBoosting = false;
+        let boostCooldownTimer = 0;
+        let boostFuel = 100;
 
         const SHOP_ITEMS = [
+            { id: 'car_boat', type: 'car', name: 'Tekne', price: 600, icon: '🚤' },
             { id: 'driver_zombie', type: 'driver', name: 'Zombi Bob', price: 5000, icon: '🧟' },
             { id: 'driver_alien', type: 'driver', name: 'Uzaylı', price: 10000, icon: '👽' },
             { id: 'car_blue', type: 'car', name: 'Mavi Şimşek', price: 15000, icon: '🚙' },
@@ -480,10 +511,21 @@
             { id: 'acc_turbo', type: 'accessory', name: 'Turbo Motor', price: 20000, icon: '🚀' }
         ];
 
+        const DISPLAY_ITEMS_IDS = ['car_boat']; 
+
         function saveGameData() {
             localStorage.setItem('boombob_wallet', wallet);
             localStorage.setItem('boombob_inventory', JSON.stringify(inventory));
             localStorage.setItem('boombob_equipped', JSON.stringify(equipped));
+        }
+
+        function resetGameData() {
+            if(confirm("Tüm ilerlemen silinecek! Emin misin?")) {
+                localStorage.removeItem('boombob_wallet');
+                localStorage.removeItem('boombob_inventory');
+                localStorage.removeItem('boombob_equipped');
+                location.reload();
+            }
         }
 
         // --- DİL SİSTEMİ ---
@@ -492,7 +534,7 @@
             tr: {
                 play: "OYNA", shop: "MAĞAZA 🛒", inventory: "ÇANTA 🎒", levels: "BÖLÜMLER 🗺️", settings: "AYARLAR ⚙️", back: "GERİ DÖN",
                 level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
-                level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: MARS ROVER",
+                level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: OKYANUS",
                 tutorial: "D-İLERİ  A-GERİ  SPACE-FREN", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
                 winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
@@ -500,12 +542,14 @@
                 langLabel: "DİL / LANGUAGE", suggTitle: "ÖNERİ YAP 💡", submit: "GÖNDER", empty: "Çantan bomboş...",
                 comingSoon: "GELECEK GÜNCELLEMEDE... 🚧", shopDrivers: "SÜRÜCÜLER", shopCars: "ARABALAR", shopAccessories: "AKSESUARLAR",
                 panic: "0 IQ OYNAYIŞ", ohno: "EYVAH 😱", broke: "PARASIZ EZİK!", next: "SONRAKİ LEVEL",
-                finishGame: "Tüm Leveller Bitti! Başa dönülüyor.", equip: "KUŞAN", equipped: "KUŞANDIN", buy: "SATIN AL"
+                finishGame: "Tüm Leveller Bitti! Başa dönülüyor.", equip: "KUŞAN", equipped: "KUŞANDIN", buy: "SATIN AL",
+                drownTitle: "BOĞULDUN", drownMsg: "ARE U DUMB?",
+                boatBan: "Tekneler karada gitmez kaptan! 🚫\nVarsayılan arabaya geçiliyor."
             },
             en: {
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
-                level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: MARS ROVER",
+                level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: OCEAN",
                 tutorial: "D-GAS  A-BACK  SPACE-BRAKE", level3Msg: "NOW IT'S GETTING HARDER... 😈",
                 winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
@@ -513,7 +557,9 @@
                 langLabel: "LANGUAGE", suggTitle: "MAKE SUGGESTION 💡", submit: "SUBMIT", empty: "Inventory is empty...",
                 comingSoon: "COMING SOON... 🚧", shopDrivers: "DRIVERS", shopCars: "CARS", shopAccessories: "ACCESSORIES",
                 panic: "0 IQ GAMEPLAY", ohno: "OH NOO 😱", broke: "HAHA BROKE LOSER!", next: "NEXT LEVEL",
-                finishGame: "All Levels Completed! Returning to start.", equip: "EQUIP", equipped: "EQUIPPED", buy: "BUY"
+                finishGame: "All Levels Completed! Returning to start.", equip: "EQUIP", equipped: "EQUIPPED", buy: "BUY",
+                drownTitle: "DROWNED", drownMsg: "ARE U DUMB?",
+                boatBan: "Boats don't go on land, captain! 🚫\nSwitching to default car."
             }
         };
 
@@ -545,25 +591,50 @@
             const titles = { driver: TEXTS[currentLang].shopDrivers, car: TEXTS[currentLang].shopCars, accessory: TEXTS[currentLang].shopAccessories };
 
             categories.forEach(cat => {
-                container.innerHTML += `<div class="shop-section-title">${titles[cat]}</div>`;
-                const grid = document.createElement('div'); grid.className = 'shop-grid';
-                SHOP_ITEMS.filter(i => i.type === cat).forEach(item => {
-                    const isOwned = inventory.includes(item.id);
-                    const div = document.createElement('div'); div.className = `shop-item ${isOwned ? 'owned' : ''}`;
-                    div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-price">${isOwned ? '✔️' : '🪙 ' + item.price}</div>`;
-                    if(!isOwned) div.onclick = () => buyItem(item);
-                    grid.appendChild(div);
-                });
-                container.appendChild(grid);
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'shop-section-title';
+                titleDiv.innerText = titles[cat];
+                container.appendChild(titleDiv);
+
+                const grid = document.createElement('div'); 
+                grid.className = 'shop-grid';
+                
+                const itemsToShow = SHOP_ITEMS.filter(i => i.type === cat && DISPLAY_ITEMS_IDS.includes(i.id));
+                
+                if(itemsToShow.length === 0) {
+                     const emptyMsg = document.createElement('div');
+                     emptyMsg.className = 'coming-soon';
+                     emptyMsg.innerText = TEXTS[currentLang].comingSoon;
+                     container.appendChild(emptyMsg);
+                } else {
+                    itemsToShow.forEach(item => {
+                        const isOwned = inventory.includes(item.id);
+                        if(isOwned) return; 
+
+                        const div = document.createElement('div'); 
+                        div.className = `shop-item`;
+                        div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-price">🪙 ${item.price}</div>`;
+                        
+                        div.addEventListener('click', () => buyItem(item));
+                        
+                        grid.appendChild(div);
+                    });
+                    container.appendChild(grid);
+                }
             });
         }
 
         function buyItem(item) {
             if(wallet >= item.price) {
-                wallet -= item.price; inventory.push(item.id); saveGameData();
-                document.getElementById('shop-balance').innerText = wallet; renderShop(); renderInventory();
+                wallet -= item.price; 
+                inventory.push(item.id); 
+                saveGameData();
+                document.getElementById('shop-balance').innerText = wallet; 
+                renderShop(); 
+                renderInventory(); 
             } else {
-                const brokeMsg = document.getElementById('broke-message'); brokeMsg.classList.add('active');
+                const brokeMsg = document.getElementById('broke-message'); 
+                brokeMsg.classList.add('active');
                 setTimeout(() => brokeMsg.classList.remove('active'), 2000);
             }
         }
@@ -572,10 +643,17 @@
             const container = document.getElementById('inventory-container'); container.innerHTML = '';
             if(inventory.length === 0) { container.innerHTML = `<p style="font-size: 2rem; color: #D1D5DB;">${TEXTS[currentLang].empty}</p><div style="font-size: 6rem;">🕸️</div>`; return; }
             const grid = document.createElement('div'); grid.className = 'shop-grid';
-            const allItems = [ { id: 'driver_default', type: 'driver', name: 'Bob', icon: '😐' }, { id: 'car_default', type: 'car', name: 'Kırmızı', icon: '🚗' }, ...SHOP_ITEMS.filter(i => inventory.includes(i.id)) ];
+            
+            const allItems = [ 
+                { id: 'driver_default', type: 'driver', name: 'Bob', icon: '😐' }, 
+                { id: 'car_default', type: 'car', name: 'Kırmızı', icon: '🚗' }, 
+                ...SHOP_ITEMS.filter(i => inventory.includes(i.id)) 
+            ];
+            
             allItems.forEach(item => {
                 const isEquipped = equipped[item.type] === item.id;
-                const div = document.createElement('div'); div.className = `shop-item ${isEquipped ? 'equipped' : ''}`;
+                const div = document.createElement('div'); 
+                div.className = `shop-item ${isEquipped ? 'equipped' : ''}`;
                 div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-status">${isEquipped ? TEXTS[currentLang].equipped : TEXTS[currentLang].equip}</div>`;
                 div.onclick = () => equipItem(item);
                 grid.appendChild(div);
@@ -586,7 +664,7 @@
         function equipItem(item) { equipped[item.type] = item.id; saveGameData(); renderInventory(); }
 
         let engine, car, driverHead;
-        let coins = [], particles = [];
+        let coins = [], particles = [], fish = [], seagulls = [];
         let gameState = 'start', score = 0, level = 1;
         let animationFrameId, cloudOffset = 0;
         let camera = { x: 0, y: 0 };
@@ -596,6 +674,7 @@
         const LEVEL_CONFIG = { 1: { targetDistance: 140 }, 2: { targetDistance: 100 }, 3: { targetDistance: 200 }, 4: { targetDistance: 240 }, 5: { targetDistance: 300 } };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
+        const boatImg = new Image(); boatImg.src = 'boat.png';
         const headImg = new Image(); headImg.src = 'head.png';
         const canvas = document.getElementById('world');
         const ctx = canvas.getContext('2d');
@@ -603,46 +682,44 @@
 
         function createFloatingHeads() {
             const container = document.getElementById('start-screen');
-            const existing = container.querySelectorAll('.floating-item');
-            existing.forEach(e => e.remove());
-            const existingHearts = container.querySelectorAll('.floating-heart');
-            existingHearts.forEach(e => e.remove());
-
-            // KAFALAR VE KALPLER İÇİN ORTAK "AŞAĞI DÜŞME" (fallDown) ANİMASYONU
+            container.querySelectorAll('.floating-item').forEach(e => e.remove());
+            container.querySelectorAll('.floating-heart').forEach(e => e.remove());
             for(let i=0; i<30; i++) {
                 const img = document.createElement('img'); img.src = 'head.png'; img.className = 'floating-item';
-                img.style.left = Math.random() * 100 + '%'; 
-                img.style.top = -(Math.random() * 50 + 10) + '%'; // Ekranın üstünde başla
+                img.style.left = Math.random() * 100 + '%'; img.style.top = -(Math.random() * 50 + 10) + '%';
                 img.style.width = (20+Math.random()*40)+'px'; 
                 img.style.animationDuration = (5+Math.random()*10)+'s'; img.style.animationDelay = (Math.random()*5)+'s';
                 container.appendChild(img);
             }
             for(let i=0; i<20; i++) {
                 const div = document.createElement('div'); div.innerText = '❤️'; div.className = 'floating-heart';
-                div.style.left = Math.random()*100+'%'; 
-                div.style.top = -(Math.random() * 50 + 10) + '%'; // Ekranın üstünde başla
+                div.style.left = Math.random()*100+'%'; div.style.top = -(Math.random() * 50 + 10) + '%';
                 div.style.animationDuration = (4+Math.random()*6)+'s'; div.style.animationDelay = (Math.random()*5)+'s';
                 container.appendChild(div);
             }
         }
 
-        // SAYFA YÜKLENDİĞİNDE EFEKTLERİ BAŞLAT
         window.onload = function() {
-            setLanguage(currentLang); 
-            renderShop(); 
-            renderInventory();
-            createFloatingHeads(); // YÜKLENİNCE ÇAĞIR
+            setLanguage(currentLang); renderShop(); renderInventory(); createFloatingHeads(); 
         };
 
         window.addEventListener('keydown', (e) => {
             if(e.code === 'Space') e.preventDefault();
-            keys[e.code] = true;
+            
+            // FIX: Capture Shift key correctly
+            if (e.key === 'Shift') keys['Shift'] = true;
+            else keys[e.code] = true;
+            
             if(gameState === 'playing' && !isPaused && level === 1) {
                 if(e.code === 'KeyD') tutorialState.D = true; if(e.code === 'KeyA') tutorialState.A = true; if(e.code === 'Space') tutorialState.Space = true;
                 if(tutorialState.A && tutorialState.D && tutorialState.Space) document.getElementById('tutorial-text').style.display = 'none';
             }
         });
-        window.addEventListener('keyup', (e) => keys[e.code] = false);
+        window.addEventListener('keyup', (e) => {
+             // FIX: Capture Shift key correctly
+            if (e.key === 'Shift') keys['Shift'] = false;
+            else keys[e.code] = false;
+        });
 
         function toggleSuggestions() { const box = document.getElementById('suggestions-box'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; }
         function openScreen(name) {
@@ -664,6 +741,7 @@
             ['score-board','level-indicator','coin-counter','speedometer','tutorial-text','btn-ingame-settings','pedals-container'].forEach(id => { document.getElementById(id).style.display = 'none'; });
             document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active');
             document.getElementById('level3-message').classList.remove('active'); document.getElementById('broke-message').classList.remove('active');
+            document.getElementById('dumb-message').classList.remove('active');
 
             if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
             else if (state === 'playing') {
@@ -674,7 +752,8 @@
                 document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
                 if (level === 1 && (!tutorialState.A || !tutorialState.D || !tutorialState.Space)) document.getElementById('tutorial-text').style.display = 'block';
                 if (level === 3) { const l3m = document.getElementById('level3-message'); l3m.classList.add('active'); setTimeout(() => l3m.classList.remove('active'), 4000); }
-                let bg = '#93C5FD'; if(level === 4) bg = '#1e1b4b'; if(level === 5) bg = '#7f1d1d'; document.getElementById('game-container').style.backgroundColor = bg;
+                let bg = '#93C5FD'; if(level === 4) bg = '#1e1b4b'; if(level === 5) bg = '#60A5FA'; 
+                document.getElementById('game-container').style.backgroundColor = bg;
             } else if (state === 'gameover') {
                 document.getElementById('gameover-screen').style.display = 'flex'; document.getElementById('final-score').innerText = score; document.getElementById('final-coins').innerText = wallet;
             } else if (state === 'win') {
@@ -683,7 +762,32 @@
             }
         }
 
-        function startGame() { gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; document.getElementById('score-board').innerText = `DIST: 0m`; updateUI('playing'); if (animationFrameId) cancelAnimationFrame(animationFrameId); setupPhysicsWorld(); gameLoop(); }
+        function startGame() { 
+            if(gameState === 'playing') return;
+            
+            // --- GÜNCELLEME: TEKNE KONTROLÜ (ÇOKLU DİL DESTEĞİ İLE) ---
+            if (level !== 5 && equipped.car === 'car_boat') {
+                // Seçili dile göre uyarı ver
+                alert(TEXTS[currentLang].boatBan);
+                
+                // Arabayı değiştir
+                equipped.car = 'car_default';
+                
+                // Değişikliği kaydet ve UI'ı güncelle
+                saveGameData(); 
+                renderInventory();
+            }
+            // -----------------------------------------------------------
+
+            gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; 
+            tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
+            boostFuel = 100; // Boost sıfırla
+            document.getElementById('score-board').innerText = `DIST: 0m`; 
+            updateUI('playing'); 
+            if (animationFrameId) cancelAnimationFrame(animationFrameId); 
+            setupPhysicsWorld(); 
+            gameLoop(); 
+        }
         function nextLevel() { if (LEVEL_CONFIG[level + 1]) { level++; gameState = 'start'; startGame(); } else { alert(TEXTS[currentLang].finishGame); level = 1; gameState = 'start'; updateUI('start'); } }
 
         function setupPhysicsWorld() {
@@ -691,11 +795,12 @@
             if (engine) { Matter.World.clear(engine.world); Matter.Engine.clear(engine); } else { engine = Engine.create(); }
             engine.positionIterations = 8; engine.velocityIterations = 8; engine.gravity.y = (level === 4) ? 0.5 : 1.5;
             const world = engine.world;
+
             const CAT_CAR = 0x0002, CAT_GROUND = 0x0004, CAT_DRIVER = 0x0008, CAT_COIN = 0x0010, CAT_FINISH = 0x0020;
             const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
 
-            // GİZLİ DUVAR (Arkaya düşmeyi engeller) - YERİ GÜNCELLENDİ (X=-100)
-            const startWall = Bodies.rectangle(-100, 0, 200, 20000, { isStatic: true, render: { visible: false } }); Composite.add(world, startWall);
+            // GİZLİ DUVAR
+            const startWall = Bodies.rectangle(-200, 0, 200, 20000, { isStatic: true, render: { visible: false } }); Composite.add(world, startWall);
 
             const terrainBodies = []; let x = 0; let y = GAME_HEIGHT * 0.7; const segmentWidth = 60; const maxSegments = 800;
             for (let i = 0; i < maxSegments; i++) {
@@ -705,10 +810,19 @@
                     else if (level === 2) { change = Math.sin(i * 0.1) * 30 + Math.sin(i * 0.2) * 40; if (i % 50 > 40) change -= 50; }
                     else if (level === 3) { change = Math.sin(i * 0.15) * 40 + Math.sin(i * 0.25) * 20; if (i % 40 > 30) change += 40; if (i % 60 > 50) change -= 30; }
                     else if (level === 4) { if(i % 15 > 10) { x += segmentWidth; continue; } change = Math.sin(i * 0.1) * 30; }
-                    else if (level === 5) { change = Math.sin(i * 0.2) * 60 + Math.random() * 20; }
+                    else if (level === 5) { change = Math.sin(i * 0.1) * 10; } 
                 }
                 const nextY = (GAME_HEIGHT * 0.7) + change; const angle = Math.atan2(nextY - y, segmentWidth);
-                const ground = Bodies.rectangle(x + segmentWidth / 2, (y + nextY) / 2 + 300, segmentWidth + 80, 600, { isStatic: true, friction: 0.8, angle: angle, label: 'ground', collisionFilter: { category: CAT_GROUND } });
+                
+                const isWater = level === 5; const isBoat = equipped.car === 'car_boat';
+                const groundOptions = { isStatic: true, friction: 0.8, angle: angle, label: 'ground', collisionFilter: { category: CAT_GROUND } };
+                if (isWater) {
+                     // SU İÇİN DEĞİŞİKLİK: HERKES İÇİN SENSOR (Fiziksel çarpışma yok)
+                     // Tekne kodla yüzdürülecek, araba kodla batırılacak.
+                     groundOptions.isSensor = true; 
+                }
+                
+                const ground = Bodies.rectangle(x + segmentWidth / 2, (y + nextY) / 2 + 300, segmentWidth + 80, 600, groundOptions);
                 terrainBodies.push(ground);
                 if (i > 10 && i % 6 === 0 && Math.random() > 0.3) {
                     const coinX = x + segmentWidth / 2; const coinY = (y + nextY) / 2 - 50;
@@ -728,16 +842,26 @@
             const chassis = Bodies.rectangle(startX, startY, 130, 40, { density: 0.004, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } });
             const wheelRadius = 18; 
             const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
-            // Tekerlek Aralığı (45: Hafif Ayrık)
-            const wheelOffset = 45; 
-            const wheelBack = Bodies.circle(startX - wheelOffset, startY + 30, wheelRadius, wheelOptions);
-            const wheelFront = Bodies.circle(startX + wheelOffset, startY + 30, wheelRadius, wheelOptions);
-            const suspensionOptions = { bodyA: chassis, stiffness: 0.08, damping: 0.5, length: 0 };
-            const shockBack = Constraint.create({ ...suspensionOptions, bodyB: wheelBack, pointA: { x: -wheelOffset, y: 30 } });
-            const shockFront = Constraint.create({ ...suspensionOptions, bodyB: wheelFront, pointA: { x: wheelOffset, y: 30 } });
+            const wheelOffset = 35; 
+            
+            // Tekne ise tekerlek oluşturma
+            const isBoat = equipped.car === 'car_boat';
+            let wheelBack, wheelFront, shockBack, shockFront;
+
+            if (!isBoat) {
+                wheelBack = Bodies.circle(startX - wheelOffset, startY + 30, wheelRadius, wheelOptions);
+                wheelFront = Bodies.circle(startX + wheelOffset, startY + 30, wheelRadius, wheelOptions);
+                const suspensionOptions = { bodyA: chassis, stiffness: 0.08, damping: 0.5, length: 0 };
+                shockBack = Constraint.create({ ...suspensionOptions, bodyB: wheelBack, pointA: { x: -wheelOffset, y: 30 } });
+                shockFront = Constraint.create({ ...suspensionOptions, bodyB: wheelFront, pointA: { x: wheelOffset, y: 30 } });
+            }
+
             const headBody = Bodies.circle(startX, startY - 50, 20, { density: 0.001, friction: 0.1, restitution: 0.2, label: 'driverHead', collisionFilter: { category: CAT_DRIVER, mask: CAT_GROUND } });
             const neck = Constraint.create({ bodyA: chassis, bodyB: headBody, pointA: { x: -15, y: -25 }, stiffness: 0.2, damping: 0.1, length: 2 });
-            Composite.add(world, [chassis, wheelBack, wheelFront, shockBack, shockFront, headBody, neck]);
+            
+            Composite.add(world, [chassis, headBody, neck]); 
+            if (!isBoat) Composite.add(world, [wheelBack, wheelFront, shockBack, shockFront]); 
+
             car = { chassis, wheelBack, wheelFront }; driverHead = headBody;
 
             Events.on(engine, 'collisionStart', (event) => {
@@ -745,7 +869,29 @@
                 for (let i = 0; i < pairs.length; i++) {
                     const { bodyA, bodyB } = pairs[i];
                     const labels = [bodyA.label, bodyB.label];
-                    if (labels.includes('driverHead') && labels.includes('ground')) { gameState = 'gameover'; updateUI('gameover'); }
+                    
+                    // Game Over (Head Collision)
+                    if (labels.includes('driverHead') && labels.includes('ground')) { 
+                        // Lvl 5'te suyun içine kafa girince ölünmez, sadece araba batarsa ölünür.
+                        // Diğer levellerde kafa yere değerse ölürsün.
+                        if(level !== 5) {
+                            gameState = 'gameover'; updateUI('gameover'); 
+                        } else {
+                            // Level 5'teyiz, tekne ters dönerse?
+                            // Tekne ise ve ters döndüyse (kafa suya girdiyse) ÖLSÜN.
+                            // Yani Level 5'te "Head hitting water" = DEATH is what user requested now.
+                            // User said: "TEKNE TERS DONERSE DE OLURUZ"
+                            
+                            // BUT ALSO: The user said "boat.png yani tekne de level 5i acinca ki, olmamasi lazim, oluyoruz"
+                            // Wait, if the boat is just floating and head touches water (sensor), collisionStart might still fire?
+                            // Since ground is sensor in level 5, collisionStart fires but no physical response.
+                            // So we should ONLY trigger game over if level !== 5.
+                            // UNLESS the boat flips over completely?
+                            
+                            // Let's disable head-water collision death for Level 5 entirely to be safe as requested "tekne de ise olmememiz lazim"
+                             // (Unless they sink too deep which is handled in gameLoop)
+                        }
+                    }
                     if ( (bodyA.label === 'coin' && (bodyB.label === 'chassis' || bodyB.label === 'wheel')) || (bodyB.label === 'coin' && (bodyA.label === 'chassis' || bodyA.label === 'wheel')) ) {
                         const coinBody = bodyA.label === 'coin' ? bodyA : bodyB;
                         Matter.Composite.remove(engine.world, coinBody);
@@ -759,31 +905,124 @@
         function gameLoop() {
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
-                if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
-                    Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); Matter.Body.setAngularVelocity(car.chassis, 0);
+                
+                // Level 5 Death Logic (Drowning Car)
+                if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
+                    document.getElementById('dumb-message').classList.add('active');
+                    setTimeout(() => { 
+                        gameState = 'gameover'; 
+                        updateUI('gameover'); 
+                        document.getElementById('title-gameover').innerText = TEXTS[currentLang].drownTitle;
+                        document.getElementById('txt-skill').innerText = TEXTS[currentLang].drownMsg;
+                    }, 1500);
+                } else if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
+                    Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); 
+                    if(equipped.car !== 'car_boat') {
+                        Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); 
+                        Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); 
+                    }
+                    Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); 
+                    Matter.Body.setAngularVelocity(car.chassis, 0);
                 }
-                const MAX_SPEED = equipped.accessory === 'acc_turbo' ? 0.8 : 0.5; 
+                
+                // Level 5 Buoyancy (Boat Only)
+                if (level === 5 && equipped.car === 'car_boat') {
+                    const waterLevel = (GAME_HEIGHT * 0.7) + Math.sin((car.chassis.position.x / 60) * 0.1) * 10;
+                    if (car.chassis.position.y > waterLevel) {
+                        const depth = car.chassis.position.y - waterLevel;
+                        Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0, y: -0.008 * depth });
+                        Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.95, y: car.chassis.velocity.y * 0.9 });
+                        Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity * 0.9);
+                    }
+                }
+
+                let MAX_SPEED = 0.5; if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
+
                 if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
-                const speedRaw = Math.abs(car.wheelBack.angularVelocity); const displaySpeed = Math.min(Math.round(speedRaw * 60), 30);
-                document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / 30) * 100, 100) + '%';
+                
+                let speedRaw = 0;
+                if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity);
+                else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
+
+                let displayMax = 30; if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
+                const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
+                document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
+
+                // BOOST RECHARGE LOGIC
+                if (keys['Shift'] && canBoost && boostFuel > 0) {
+                    isBoosting = true;
+                    boostFuel -= 0.5; // Deplete fuel (approx 3.3s at 60fps, tweaked to 5s needs slower drain)
+                    // 5s = 300 frames. 100 / 300 = 0.33 per frame.
+                    // Let's make it exact 5s:
+                    boostFuel = Math.max(0, boostFuel - (100/300)); 
+                } else {
+                    isBoosting = false;
+                }
+
+                if (boostFuel <= 0 && canBoost) {
+                    canBoost = false; // Start cooldown
+                    boostCooldownTimer = 300; // 5 seconds cooldown
+                }
+
+                if (!canBoost) {
+                    boostCooldownTimer--;
+                    // --- GÜNCELLEME: BOOST GÖRSEL DOLUM ---
+                    let pct = 100 - (boostCooldownTimer / 300 * 100);
+                    document.getElementById('boost-bar').style.width = pct + '%';
+                    document.getElementById('boost-label').innerText = "SOĞUTULUYOR... " + Math.floor(pct) + "%";
+
+                    if (boostCooldownTimer <= 0) {
+                        canBoost = true;
+                        boostFuel = 100; // Refill instantly
+                        document.getElementById('boost-label').innerText = "BOOST (SHIFT)";
+                    }
+                }
+
+                // Boost Bar Visuals
+                const boostBar = document.getElementById('boost-bar');
+                if(canBoost) boostBar.style.width = boostFuel + '%';
+                
+                if (!canBoost) boostBar.style.backgroundColor = '#EF4444'; // Red when cooling down
+                else boostBar.style.backgroundColor = '#FACC15'; // Yellow when ready
 
                 const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
                 if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
                 if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
 
-                if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
-                if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
-                if (keys['Space']) {
-                    Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
+                if (equipped.car !== 'car_boat') {
+                    if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
+                    if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
+                    if (keys['Space']) {
+                        Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9);
+                        Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
+                        if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04);
+                    }
+                } else { // TEKNE KONTROLÜ
+                     if (keys['KeyD']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0.03, y: 0 }); // DAHA HIZLI (0.03)
+                     if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.01, y: 0 });
+                     
+                     // BOOST
+                     if (isBoosting) {
+                         Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0.05, y: 0 }); // Extra speed
+                     }
                 }
-                if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
+                
+                // --- GÜNCELLEME: W TUŞU TEKNE İÇİN KAPALI ---
+                if (keys['KeyW'] && equipped.car !== 'car_boat') { 
+                    Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); 
+                }
+                // --------------------------------------------
 
-                if (Math.abs(car.wheelBack.angularVelocity) > 0.1) {
+                // Particles
+                if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
                     const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; const dirtY = car.wheelBack.position.y + 15;
                     if(Math.random() > 0.5) particles.push({ x: dirtX, y: dirtY, vx: (Math.random() - 0.5) * 4 - 2, vy: -Math.random() * 3 - 1, life: 1.0, type: 'dirt' });
-                    const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
+                }
+                if (Math.abs(car.chassis.velocity.x) > 1) {
+                     const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
                     if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
                 }
+
                 for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; if (p.life <= 0) particles.splice(i, 1); }
                 const dist = Math.floor(car.chassis.position.x / 100); if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
             }
@@ -794,18 +1033,33 @@
         function draw() {
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.save();
             ctx.translate(camera.x, camera.y);
-            ctx.fillStyle = level === 5 ? '#7f1d1d' : (level === 4 ? '#1e1b4b' : '#87CEEB');
+            ctx.fillStyle = level === 5 ? '#3b82f6' : (level === 4 ? '#1e1b4b' : '#87CEEB');
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
             if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
             
-            if(level === 5) {
-                const time = Date.now() / 1000;
-                for(let i=0; i<5; i++) {
-                    const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200);
-                    const uy = -camera.y + 100 + Math.sin(time + i) * 50;
-                    ctx.font = "40px Arial"; ctx.fillText("🛸", ux, uy);
-                }
+            // --- GÜNCELLEME: LEVEL 5 BALIKLARI ---
+            if(level === 5) { 
+                const time = Date.now() / 1000; 
+                // Kuşlar
+                for(let i=0; i<5; i++) { 
+                    const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200); 
+                    const uy = -camera.y + 100 + Math.sin(time + i) * 50; 
+                    ctx.font = "40px Arial"; ctx.fillText("🐦", ux, uy); 
+                } 
+                // Balıklar (Hareketli ve daha yukarıda)
+                for(let i=0; i<15; i++) { 
+                    let speed = (time * 100) + (i * 50);
+                    let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
+                    if(fx < -100) fx += (GAME_WIDTH + 1000); 
+                    
+                    // Yükseklik ayarı: "250" değeri balıkları yukarı taşır.
+                    let fy = -camera.y + 250 + (i * 40) + Math.sin(time * 2 + i) * 30; 
+                    
+                    ctx.font = (20 + (i%3)*5) + "px Arial";
+                    ctx.fillText("🐟", fx, fy); 
+                } 
             }
+            // -------------------------------------
 
             if (engine) {
                 const bodies = Matter.Composite.allBodies(engine.world);
@@ -823,9 +1077,25 @@
                 bodies.forEach(body => {
                     if (body.label === 'ground') {
                         ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
-                        ctx.beginPath(); ctx.rect(-70, -300, 140, 600); ctx.fillStyle = level === 5 ? '#520404' : '#5D4037'; ctx.fill();
-                        ctx.beginPath(); ctx.rect(-70, -300, 140, 20); ctx.fillStyle = level === 5 ? '#991b1b' : (level === 4 ? '#94a3b8' : '#4CAF50'); ctx.fill();
-                        ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
+                        if(level === 5) {
+                            ctx.fillStyle = 'rgba(60, 160, 255, 0.6)'; ctx.beginPath(); ctx.rect(-70, -300, 140, 600); ctx.fill();
+                            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)'; ctx.beginPath(); ctx.rect(-70, -300, 140, 10); ctx.fill();
+                            
+                            // Extra Waves Visuals
+                            ctx.beginPath();
+                            ctx.moveTo(-70, -300);
+                            for(let i=0; i<=140; i+=10) {
+                                ctx.lineTo(-70+i, -300 + Math.sin((Date.now()/200) + i*0.1)*5);
+                            }
+                            ctx.lineTo(70, 600);
+                            ctx.lineTo(-70, 600);
+                            ctx.fill();
+                        } else {
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 600); ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; ctx.fill();
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 20); ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); ctx.fill();
+                            ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); 
+                        }
+                        ctx.restore();
                     } else if (body.label === 'coin') {
                         ctx.save(); ctx.translate(body.position.x, body.position.y);
                         const value = body.coinValue || 1; const time = Date.now() / 200; const scaleX = Math.sin(time); 
@@ -844,16 +1114,20 @@
 
                 if (car && car.chassis) {
                     const wheelRad = 18;
-                    [car.wheelBack, car.wheelFront].forEach(wheel => {
-                        ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
-                        ctx.beginPath(); ctx.arc(0,0,wheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
-                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,wheelRad); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-wheelRad); ctx.stroke(); ctx.restore();
-                    });
+                    if(equipped.car !== 'car_boat') { 
+                         [car.wheelBack, car.wheelFront].forEach(wheel => {
+                            ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
+                            ctx.beginPath(); ctx.arc(0,0,wheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,wheelRad); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-wheelRad); ctx.stroke(); ctx.restore();
+                        });
+                    }
 
                     ctx.save(); ctx.translate(car.chassis.position.x, car.chassis.position.y); ctx.rotate(car.chassis.angle);
                     if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
-                    if (carImg.complete && carImg.naturalWidth !== 0) { ctx.drawImage(carImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
+                    
+                    const drawImg = equipped.car === 'car_boat' ? boatImg : carImg;
+                    if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
                     ctx.restore(); 
 
                     if (driverHead) {
@@ -862,7 +1136,7 @@
                         if (headImg.complete && headImg.naturalWidth !== 0) {
                             ctx.drawImage(headImg, -25, -25, 50, 50); ctx.filter = 'none';
                             let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
-                            if (Math.abs(angle) > 1.0) {
+                            if (Math.abs(angle) > 1.0 && equipped.car !== 'car_boat') { 
                                 document.getElementById('panic-overlay').classList.add('active'); document.getElementById('panic-message').classList.add('active');
                                 [8, 22].forEach(xOff => { ctx.beginPath(); ctx.arc(xOff, -5, xOff === 22 ? 10 : 8, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(xOff, -5, 3, 0, Math.PI * 2); ctx.fillStyle = 'black'; ctx.fill(); });
                             } else { document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active'); }
