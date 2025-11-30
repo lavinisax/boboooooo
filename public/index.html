@@ -47,6 +47,29 @@
             overflow: hidden;
         }
 
+        /* YENİ BİLDİRİM KUTUSU */
+        #custom-notification {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: #1F2937;
+            border: 4px solid #EF4444;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 20px;
+            z-index: 100;
+            text-align: center;
+            font-family: 'Impact', sans-serif;
+            font-size: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        #custom-notification.active {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
         /* ARKA PLAN EFEKTLERİ */
         .floating-item, .floating-heart {
             position: absolute;
@@ -321,6 +344,9 @@
     <div id="game-container">
         <canvas id="world"></canvas>
 
+        <!-- Yeni Özel Bildirim Kutusu -->
+        <div id="custom-notification"></div>
+
         <!-- Efektler -->
         <div id="panic-overlay"></div>
         <div id="panic-message"><span id="txt-panic-iq">0 IQ OYNAYIŞ</span><br><span style="font-size: 3rem;" id="txt-panic-ohno">EYVAH 😱</span></div>
@@ -501,7 +527,10 @@
         let isBoosting = false;
         let boostCooldownTimer = 0;
         let boostFuel = 100;
-        let spawnInvincibility = false; // Level 5 başlangıç koruması
+        let spawnInvincibility = false; 
+        
+        // --- LEVEL 4 ALIEN LOGIC ---
+        let alienAlive = true;
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', name: 'Tekne', price: 600, icon: '🚤' },
@@ -545,7 +574,7 @@
                 panic: "0 IQ OYNAYIŞ", ohno: "EYVAH 😱", broke: "PARASIZ EZİK!", next: "SONRAKİ LEVEL",
                 finishGame: "Tüm Leveller Bitti! Başa dönülüyor.", equip: "KUŞAN", equipped: "KUŞANDIN", buy: "SATIN AL",
                 drownTitle: "BOĞULDUN", drownMsg: "ARE U DUMB?",
-                boatBan: "Tekneler karada gitmez kaptan! 🚫\nVarsayılan arabaya geçiliyor."
+                boatBan: "Tekneler karada gitmez kaptan! 🚫<br>Varsayılan arabaya geçiliyor."
             },
             en: {
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
@@ -560,7 +589,7 @@
                 panic: "0 IQ GAMEPLAY", ohno: "OH NOO 😱", broke: "HAHA BROKE LOSER!", next: "NEXT LEVEL",
                 finishGame: "All Levels Completed! Returning to start.", equip: "EQUIP", equipped: "EQUIPPED", buy: "BUY",
                 drownTitle: "DROWNED", drownMsg: "ARE U DUMB?",
-                boatBan: "Boats don't go on land, captain! 🚫\nSwitching to default car."
+                boatBan: "Boats don't go on land, captain! 🚫<br>Switching to default car."
             }
         };
 
@@ -736,6 +765,16 @@
         function goToMenu() { gameState = 'start'; isPaused = false; if(animationFrameId) cancelAnimationFrame(animationFrameId); if(engine) { Matter.World.clear(engine.world); Matter.Engine.clear(engine); } ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.fillStyle = '#93C5FD'; ctx.fillRect(0,0, GAME_WIDTH, GAME_HEIGHT); updateUI('start'); }
         function toggleInGameSettings() { isPaused = !isPaused; document.getElementById('ingame-settings-screen').style.display = isPaused ? 'flex' : 'none'; }
         function openBugReport() { alert("Bug Report: Henüz sunucu bağlantısı yok ama şikayetiniz not alındı! 📝"); }
+        
+        // --- YENİ BİLDİRİM SİSTEMİ ---
+        function showNotification(msg) {
+            const el = document.getElementById('custom-notification');
+            el.innerHTML = msg;
+            el.classList.add('active');
+            setTimeout(() => {
+                el.classList.remove('active');
+            }, 3000);
+        }
 
         function updateUI(state) {
             ['start-screen','shop-screen','inventory-screen','levels-screen','settings-screen','gameover-screen','win-screen','ingame-settings-screen'].forEach(id => { document.getElementById(id).style.display = 'none'; });
@@ -777,9 +816,9 @@
         function startGame() { 
             if(gameState === 'playing') return;
             
-            // TEKNE KONTROLÜ
+            // TEKNE KONTROLÜ (UI Alert ile)
             if (level !== 5 && equipped.car === 'car_boat') {
-                alert(TEXTS[currentLang].boatBan);
+                showNotification(TEXTS[currentLang].boatBan);
                 equipped.car = 'car_default';
                 saveGameData(); 
                 renderInventory();
@@ -789,6 +828,7 @@
             tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
             boostFuel = 100; 
             spawnInvincibility = false; 
+            alienAlive = true; // Level 4 reset
 
             // --- LEVEL 5 START ANIMATION SETUP ---
             if (level === 5) {
@@ -839,17 +879,31 @@
                 
                 const ground = Bodies.rectangle(x + segmentWidth / 2, (y + nextY) / 2 + 300, segmentWidth + 80, 600, groundOptions);
                 terrainBodies.push(ground);
+                
+                // --- COIN LOGIC (FIXED) ---
                 if (i > 10 && i % 6 === 0 && Math.random() > 0.3) {
-                    // --- COIN POSITIONING FIX ---
                     let coinY = (y + nextY) / 2 - 50;
-                    if (level === 5) coinY += 150; // Push coins deeper into water
-                    // ----------------------------
+                    if (level === 5) coinY += 150; 
 
                     const coinX = x + segmentWidth / 2;
-                    const coinValue = (level > 1) ? 10 : 1; const coinRadius = (level > 1) ? 18 : 14;
-                    const coin = Bodies.circle(coinX, coinY, coinRadius, { isStatic: true, isSensor: true, label: 'coin', coinValue: coinValue, collisionFilter: { category: CAT_COIN } });
+                    
+                    // Coin Value Logic: 5 normally, 10 on harder/rare spots
+                    const isHardSpot = (i % 12 === 0);
+                    const coinValue = isHardSpot ? 10 : 5;
+                    const coinRadius = isHardSpot ? 18 : 14;
+
+                    const coin = Bodies.circle(coinX, coinY, coinRadius, { 
+                        isStatic: true, 
+                        isSensor: true, 
+                        label: 'coin', 
+                        coinValue: coinValue, 
+                        isCollected: false, // Double collection prevention
+                        collisionFilter: { category: CAT_COIN } 
+                    });
                     coins.push(coin); Composite.add(world, coin);
                 }
+                // --------------------------
+
                 x += segmentWidth; y = nextY;
             }
             Composite.add(world, terrainBodies);
@@ -885,8 +939,22 @@
                 shockFront = Constraint.create({ ...suspensionOptions, bodyB: wheelFront, pointA: { x: wheelOffset, y: 30 } });
             }
 
-            const headBody = Bodies.circle(startX, startY - 50, 20, { density: 0.001, friction: 0.1, restitution: 0.2, label: 'driverHead', collisionFilter: { category: CAT_DRIVER, mask: CAT_GROUND } });
-            const neck = Constraint.create({ bodyA: chassis, bodyB: headBody, pointA: { x: -15, y: -25 }, stiffness: 0.2, damping: 0.1, length: 2 });
+            // --- HEAD ADJUSTMENT FOR BOAT ---
+            // Teknede kafa daha yukarıda olsun ki hemen suya değmesin
+            let headOffsetY = -50;
+            if(isBoat) headOffsetY = -70; // Raise head for boat
+
+            const headBody = Bodies.circle(startX, startY + headOffsetY, 20, { density: 0.001, friction: 0.1, restitution: 0.2, label: 'driverHead', collisionFilter: { category: CAT_DRIVER, mask: CAT_GROUND } });
+            
+            // Neck adjustments
+            const neck = Constraint.create({ 
+                bodyA: chassis, 
+                bodyB: headBody, 
+                pointA: { x: -15, y: isBoat ? -45 : -25 }, // Higher anchor on boat chassis
+                stiffness: 0.2, 
+                damping: 0.1, 
+                length: 2 
+            });
             
             Composite.add(world, [chassis, headBody, neck]); 
             if (!isBoat) Composite.add(world, [wheelBack, wheelFront, shockBack, shockFront]); 
@@ -906,20 +974,38 @@
                     
                     // --- GAME OVER LOGIC (HEAD TOUCH) ---
                     if (labels.includes('driverHead') && labels.includes('ground')) { 
-                        // Level 5 olsa bile kafa suya değerse ölürsün.
-                        // ANCAK: Başlangıçtaki spawnInvincibility aktifse ölmezsin.
-                        if (!spawnInvincibility) {
-                            gameState = 'gameover'; 
-                            updateUI('gameover');
+                        // SADECE TEKNE TERS DÖNDÜYSE ÖLDÜR
+                        if (level === 5 && isBoat) {
+                             // Açı kontrolü: Eğer tekne çok yatıksa (yaklaşık 90 derece) öldür
+                             // 1.5 radyan ~= 85 derece
+                             if (Math.abs(chassis.angle) > 1.4 && !spawnInvincibility) {
+                                 gameState = 'gameover'; 
+                                 updateUI('gameover');
+                             }
+                        } 
+                        // DİĞER LEVELLERDE KAFA DEĞERSE ÖL
+                        else if (level !== 5) {
+                             gameState = 'gameover'; 
+                             updateUI('gameover');
                         }
                     }
                     // ------------------------------------
 
+                    // --- COIN COLLECTION FIX ---
                     if ( (bodyA.label === 'coin' && (bodyB.label === 'chassis' || bodyB.label === 'wheel')) || (bodyB.label === 'coin' && (bodyA.label === 'chassis' || bodyA.label === 'wheel')) ) {
                         const coinBody = bodyA.label === 'coin' ? bodyA : bodyB;
-                        Matter.Composite.remove(engine.world, coinBody);
-                        wallet += (coinBody.coinValue || 1); document.getElementById('coin-value').innerText = wallet; localStorage.setItem('boombob_wallet', wallet);
+                        
+                        // Zaten toplandı mı kontrol et
+                        if (!coinBody.isCollected) {
+                            coinBody.isCollected = true; // İşaretle
+                            Matter.Composite.remove(engine.world, coinBody);
+                            wallet += (coinBody.coinValue || 1); 
+                            document.getElementById('coin-value').innerText = wallet; 
+                            localStorage.setItem('boombob_wallet', wallet);
+                        }
                     }
+                    // ---------------------------
+
                     if ( (bodyA.label === 'finish' && bodyB.label === 'chassis') || (bodyB.label === 'finish' && bodyA.label === 'chassis') ) { gameState = 'win'; updateUI('win'); }
                 }
             });
@@ -958,6 +1044,19 @@
                         Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity * 0.9);
                     }
                 }
+                
+                // --- LEVEL 4 ALIEN ENCOUNTER LOGIC ---
+                if (level === 4 && alienAlive) {
+                    // Alien X coordinate: approx 200m (20000px)
+                    const alienX = 20000;
+                    const distToAlien = Math.abs(car.chassis.position.x - alienX);
+                    // 2cm ~ 400px logic in game scale
+                    if (distToAlien < 400) {
+                        alienAlive = false; // Disappear
+                        // Maybe play a sound here if we had audio
+                    }
+                }
+                // -------------------------------------
 
                 let MAX_SPEED = 0.5; if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
 
@@ -1055,29 +1154,37 @@
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
             if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
             
-            // --- LEVEL 5 FISH VISIBILITY FIX ---
+            // --- LEVEL 5 FISH (LOWERED) & LEVEL 4 UFOS ---
+            const time = Date.now() / 1000;
+            
             if(level === 5) { 
-                const time = Date.now() / 1000; 
                 // Kuşlar
                 for(let i=0; i<5; i++) { 
                     const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200); 
                     const uy = -camera.y + 100 + Math.sin(time + i) * 50; 
                     ctx.font = "40px Arial"; ctx.fillText("🐦", ux, uy); 
                 } 
-                // Balıklar (Daha yukarıda - Surface level)
+                // Balıklar (SUYUN İÇİNDE - GEMİNİN ALTINDA)
+                // Yükseklik 500 civarına çekildi
                 for(let i=0; i<15; i++) { 
                     let speed = (time * 100) + (i * 50);
                     let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
                     if(fx < -100) fx += (GAME_WIDTH + 1000); 
-                    
-                    // Yükseklik ayarı: 100 değeri balıkları su yüzeyine yakın gösterir
-                    let fy = -camera.y + 100 + (i * 40) + Math.sin(time * 2 + i) * 30; 
+                    let fy = -camera.y + 550 + (i * 40) + Math.sin(time * 2 + i) * 30; 
                     
                     ctx.font = (20 + (i%3)*5) + "px Arial";
                     ctx.fillText("🐟", fx, fy); 
                 } 
             }
-            // -----------------------------------
+            else if (level === 4) {
+                 // UFOs (Flying in the sky)
+                for(let i=0; i<5; i++) { 
+                    const ux = -camera.x + (i * 400 + time * 80) % (GAME_WIDTH + 400); 
+                    const uy = -camera.y + 50 + Math.sin(time * 2 + i) * 30; 
+                    ctx.font = "50px Arial"; ctx.fillText("🛸", ux, uy); 
+                }
+            }
+            // ---------------------------------------------
 
             if (engine) {
                 const bodies = Matter.Composite.allBodies(engine.world);
@@ -1091,6 +1198,47 @@
                 ctx.beginPath(); ctx.moveTo(25, -200); ctx.lineTo(80, -180); ctx.lineTo(25, -160); ctx.fill();
                 for(let r=0; r<2; r++) for(let c=0; c<3; c++) { ctx.fillStyle = (r+c)%2===0?'black':'white'; ctx.fillRect(25+c*10, -160+r*10, 10, 10); }
                 ctx.fillStyle = "#FACC15"; ctx.font = "bold 30px sans-serif"; ctx.fillText("FINISH", 0, -220); ctx.restore();
+
+                // --- LEVEL 4 ALIEN RENDER & GLITCH ---
+                if (level === 4 && alienAlive) {
+                    const alienX = 20000;
+                    const alienY = 300; // Standing on ground roughly
+                    
+                    // Draw Alien
+                    ctx.save();
+                    ctx.translate(alienX, alienY);
+                    ctx.font = "100px Arial";
+                    ctx.fillText("👽", 0, 0);
+                    ctx.restore();
+
+                    // CHECK IF ALIEN IS ON SCREEN FOR GLITCH
+                    const screenAlienX = alienX + camera.x;
+                    if (screenAlienX > -100 && screenAlienX < GAME_WIDTH + 100) {
+                        // Apply Glitch Effect (Slenderman style)
+                        ctx.save();
+                        // 1. Grayscale look
+                        ctx.globalCompositeOperation = 'saturation';
+                        ctx.fillStyle = "hsl(0,0%,50%)";
+                        ctx.fillRect(-camera.x, -camera.y, GAME_WIDTH*2, GAME_HEIGHT*2);
+                        ctx.globalCompositeOperation = 'source-over';
+                        
+                        // 2. Static Noise Bars
+                        for(let i=0; i<20; i++) {
+                            const barH = Math.random() * 50;
+                            const barY = -camera.y + Math.random() * GAME_HEIGHT;
+                            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)';
+                            ctx.fillRect(-camera.x - 100, barY, GAME_WIDTH + 200, barH);
+                        }
+                        
+                        // 3. Screen Shake (Camera offset simulation)
+                        const shakeX = (Math.random() - 0.5) * 20;
+                        const shakeY = (Math.random() - 0.5) * 20;
+                        ctx.translate(shakeX, shakeY);
+                        
+                        ctx.restore();
+                    }
+                }
+                // -------------------------------------
 
                 bodies.forEach(body => {
                     if (body.label === 'ground') {
@@ -1154,10 +1302,17 @@
                         if (headImg.complete && headImg.naturalWidth !== 0) {
                             ctx.drawImage(headImg, -25, -25, 50, 50); ctx.filter = 'none';
                             let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
-                            if (Math.abs(angle) > 1.0 && equipped.car !== 'car_boat') { 
-                                document.getElementById('panic-overlay').classList.add('active'); document.getElementById('panic-message').classList.add('active');
+                            
+                            // --- PANIC MODE FOR ALL VEHICLES ---
+                            // 1.0 Radyan yaklaşık 60 derece eğim
+                            if (Math.abs(angle) > 1.0) { 
+                                document.getElementById('panic-overlay').classList.add('active'); 
+                                document.getElementById('panic-message').classList.add('active');
                                 [8, 22].forEach(xOff => { ctx.beginPath(); ctx.arc(xOff, -5, xOff === 22 ? 10 : 8, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(xOff, -5, 3, 0, Math.PI * 2); ctx.fillStyle = 'black'; ctx.fill(); });
-                            } else { document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active'); }
+                            } else { 
+                                document.getElementById('panic-overlay').classList.remove('active'); 
+                                document.getElementById('panic-message').classList.remove('active'); 
+                            }
                         } else { ctx.fillStyle='#FFCC80'; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); } ctx.restore();
                     }
                 }
