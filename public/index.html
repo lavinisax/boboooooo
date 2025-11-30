@@ -69,20 +69,6 @@
             transform: translate(-50%, -50%) scale(1);
         }
         
-        #perk-indicator {
-            position: absolute;
-            top: 100px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: 'Impact', sans-serif;
-            font-size: 3rem;
-            color: #00FFFF;
-            text-shadow: 0 0 10px blue;
-            display: none;
-            z-index: 45;
-            pointer-events: none;
-        }
-
         .floating-item, .floating-heart {
             position: absolute;
             pointer-events: none;
@@ -187,6 +173,7 @@
         }
         .pedal.brake { background: linear-gradient(to bottom, #4B5563, #EF4444); }
         .pedal.gas { background: linear-gradient(to bottom, #4B5563, #4ADE80); height: 120px; }
+        .pedal.down { background: linear-gradient(to bottom, #4B5563, #3B82F6); }
         .pedal.pressed { transform: scale(0.95) rotateX(10deg); filter: brightness(1.2); box-shadow: 2px 2px 5px rgba(0,0,0,0.5); }
 
         .scroll-area {
@@ -322,7 +309,6 @@
         <canvas id="world"></canvas>
 
         <div id="custom-notification"></div>
-        <div id="perk-indicator">SPEED BOOST!</div>
 
         <div id="panic-overlay"></div>
         <div id="panic-message"><span id="txt-panic-iq">0 IQ OYNAYIŞ</span><br><span style="font-size: 3rem;" id="txt-panic-ohno">EYVAH 😱</span></div>
@@ -334,6 +320,7 @@
         <button id="btn-ingame-settings" onclick="toggleInGameSettings()">⚙️</button>
         
         <div id="pedals-container">
+            <div id="down-pedal" class="pedal down" style="display:none;">BURUN<br>AŞAĞI<br><span style="font-size:0.8rem">(S)</span></div>
             <div id="brake-pedal" class="pedal brake">FREN<br><span style="font-size:0.8rem">(Space)</span></div>
             <div id="gas-pedal" class="pedal gas">GAZ<br><span style="font-size:0.8rem">(D)</span></div>
         </div>
@@ -405,7 +392,7 @@
                 </button>
                 <button class="level-btn" onclick="selectLevel(5)">
                     <span id="lvl-btn-5">LEVEL 5: OCEAN LEVEL</span>
-                    <span class="level-info">???</span>
+                    <span class="level-info">150m</span>
                 </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
@@ -494,7 +481,6 @@
         let spawnInvincibility = false; 
         let alienAlive = true;
         let krakenState = { active: false, y: 1000 };
-        let speedBoostPerk = { active: false, timer: 0 };
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
@@ -528,7 +514,7 @@
                 play: "OYNA", shop: "MAĞAZA 🛒", inventory: "ÇANTA 🎒", levels: "BÖLÜMLER 🗺️", settings: "AYARLAR ⚙️", back: "GERİ DÖN",
                 level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
                 level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: OKYANUS",
-                tutorial: "D-İLERİ  A-GERİ  SPACE-FREN", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
+                tutorial: "D-İLERİ  A-GERİ  SPACE-FREN  S-BURUN AŞAĞI", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
                 winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
                 shopTitle: "MAĞAZA", inventoryTitle: "ENVANTER", levelsTitle: "BÖLÜM SEÇ", settingsTitle: "AYARLAR",
@@ -547,7 +533,7 @@
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
                 level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: OCEAN",
-                tutorial: "D-GAS  A-BACK  SPACE-BRAKE", level3Msg: "NOW IT'S GETTING HARDER... 😈",
+                tutorial: "D-GAS  A-BACK  SPACE-BRAKE  S-NOSE DOWN", level3Msg: "NOW IT'S GETTING HARDER... 😈",
                 winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
                 shopTitle: "SHOP", inventoryTitle: "INVENTORY", levelsTitle: "LEVEL SELECT", settingsTitle: "SETTINGS",
@@ -574,7 +560,7 @@
                 'btn-start': t.play, 'btn-shop': t.shop, 'btn-inventory': t.inventory, 'btn-levels': t.levels, 'btn-settings': t.settings,
                 'title-shop': t.shopTitle, 'title-inventory': t.inventoryTitle, 'title-levels': t.levelsTitle, 'title-settings': t.settingsTitle,
                 'lvl-btn-1': t.level1Name + " - 140m", 'lvl-btn-2': t.level2Name + " - 100m", 'lvl-btn-3': t.level3Name + " - 200m",
-                'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 300m",
+                'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 150m",
                 'lbl-lang': t.langLabel, 'btn-toggle-sugg': t.suggTitle, 'btn-submit': t.submit,
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
@@ -674,7 +660,7 @@
         let tutorialState = { A: false, D: false, Space: false };
         let isPaused = false;
 
-        const LEVEL_CONFIG = { 1: { targetDistance: 140 }, 2: { targetDistance: 100 }, 3: { targetDistance: 200 }, 4: { targetDistance: 240 }, 5: { targetDistance: 300 } };
+        const LEVEL_CONFIG = { 1: { targetDistance: 140 }, 2: { targetDistance: 100 }, 3: { targetDistance: 200 }, 4: { targetDistance: 240 }, 5: { targetDistance: 150 } };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
         const boatImg = new Image(); boatImg.src = 'boat.png';
@@ -754,7 +740,7 @@
             document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active');
             document.getElementById('level3-message').classList.remove('active'); document.getElementById('broke-message').classList.remove('active');
             document.getElementById('dumb-message').classList.remove('active');
-            document.getElementById('perk-indicator').style.display = 'none';
+            // removed perk-indicator as requested
 
             if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
             else if (state === 'playing') {
@@ -764,9 +750,11 @@
                 if (equipped.car === 'car_boat') {
                     document.getElementById('boost-label').style.display = 'block';
                     document.getElementById('boost-bar-container').style.display = 'block';
+                    document.getElementById('down-pedal').style.display = 'flex';
                 } else {
                     document.getElementById('boost-label').style.display = 'none';
                     document.getElementById('boost-bar-container').style.display = 'none';
+                    document.getElementById('down-pedal').style.display = 'none';
                 }
 
                 document.getElementById('btn-ingame-settings').style.display = 'block'; document.getElementById('pedals-container').style.display = 'flex';
@@ -798,8 +786,7 @@
             tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
             boostFuel = 100; spawnInvincibility = false; alienAlive = true; 
             krakenState = { active: false, y: 1000, msgAlpha: 0 };
-            speedBoostPerk = { active: false, timer: 0 };
-
+            
             if (level === 5) {
                 spawnInvincibility = true; 
                 setTimeout(() => { spawnInvincibility = false; }, 2000);
@@ -813,11 +800,9 @@
         }
         function nextLevel() { if (LEVEL_CONFIG[level + 1]) { level++; gameState = 'start'; startGame(); } else { alert(TEXTS[currentLang].finishGame); level = 1; gameState = 'start'; updateUI('start'); } }
         
-        // --- NEW HELPER: CALCULATE WATER HEIGHT FOR PHYSICS & VISUALS SYNC ---
         function calculateWaterHeight(x, time) {
-            // Combines all wave layers into a single "physics surface" approximation
-            // Main big wave + smaller detail wave
-            return (GAME_HEIGHT * 0.7) + Math.sin(time + x * 0.005) * 120 + Math.sin(time * 3 + x * 0.015) * 40;
+            // Lower amplitude for manageable waves (70 instead of 120)
+            return (GAME_HEIGHT * 0.7) + Math.sin(time + x * 0.003) * 70 + Math.sin(time * 2 + x * 0.01) * 20;
         }
 
         function setupPhysicsWorld() {
@@ -874,22 +859,19 @@
             const finishLine = Bodies.rectangle(finishX, 200, 50, 5000, { isStatic: true, isSensor: true, label: 'finish', collisionFilter: { category: CAT_FINISH } });
             Composite.add(world, finishLine);
             
-            // --- SPEED BOOST PERK (LEVEL 5 ONLY) ---
-            if (level === 5) {
-                const perkX = 15000; // 150m
-                const perkBody = Bodies.rectangle(perkX, GAME_HEIGHT * 0.5, 60, 60, { 
-                    isStatic: true, isSensor: true, label: 'perk_speed' 
-                });
-                Composite.add(world, perkBody);
-            }
-            // ---------------------------------------
-
             let startX = 200; let startY = GAME_HEIGHT * 0.5;
             if (level === 5) { startX = 100; startY = GAME_HEIGHT * 0.4; }
 
+            // Increased density slightly for "heavier" feel
             let density = 0.004; if(equipped.car === 'car_boat') density = 0.002;
+            // INCREASED INERTIA MANUALLY FOR STABILITY
+            const chassisOptions = { density: density, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
+            if(equipped.car === 'car_boat') chassisOptions.inertia = Infinity; // Prevent flipping unless forced? No, just high number
+            
+            const chassis = Bodies.rectangle(startX, startY, 130, 40, chassisOptions);
+            // Reset inertia to allow movement but be heavy
+            if(equipped.car === 'car_boat') Matter.Body.setInertia(chassis, 50000);
 
-            const chassis = Bodies.rectangle(startX, startY, 130, 40, { density: density, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } });
             const wheelRadius = 18; 
             const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
             const wheelOffset = 35; 
@@ -922,15 +904,6 @@
                     const { bodyA, bodyB } = pairs[i];
                     const labels = [bodyA.label, bodyB.label];
                     
-                    // Speed Perk Collision
-                    if (bodyA.label === 'perk_speed' || bodyB.label === 'perk_speed') {
-                        const perk = bodyA.label === 'perk_speed' ? bodyA : bodyB;
-                        Matter.Composite.remove(engine.world, perk);
-                        speedBoostPerk.active = true;
-                        speedBoostPerk.timer = 600; // 10 seconds at 60fps
-                        document.getElementById('perk-indicator').style.display = 'block';
-                    }
-
                     if (labels.includes('driverHead') && labels.includes('ground')) { 
                         if (level === 5 && isBoat) {
                              // No death on touch for boat
@@ -967,15 +940,6 @@
         function gameLoop() {
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
-                
-                // Speed Perk Timer
-                if (speedBoostPerk.active) {
-                    speedBoostPerk.timer--;
-                    if (speedBoostPerk.timer <= 0) {
-                        speedBoostPerk.active = false;
-                        document.getElementById('perk-indicator').style.display = 'none';
-                    }
-                }
 
                 if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
                     document.getElementById('dumb-message').classList.add('active');
@@ -990,23 +954,43 @@
                     Matter.Body.setAngularVelocity(car.chassis, 0);
                 }
                 
-                // Level 5 Buoyancy using Unified Wave Function
+                // --- DUAL POINT BUOYANCY LOGIC (NEW) ---
                 if (level === 5 && equipped.car === 'car_boat') {
                     const time = Date.now() / 1000;
-                    const waterLevel = calculateWaterHeight(car.chassis.position.x, time);
                     
+                    // Two points: Bow (Front + 40) and Stern (Back - 40)
+                    const points = [
+                        { x: car.chassis.position.x - 40, offset: -40 },
+                        { x: car.chassis.position.x + 40, offset: 40 }
+                    ];
+
+                    points.forEach(pt => {
+                        const waterLevel = calculateWaterHeight(pt.x, time);
+                        // Approx depth at this point (taking rotation into account roughly)
+                        const pointY = car.chassis.position.y + (Math.sin(car.chassis.angle) * pt.offset);
+
+                        if (pointY > waterLevel) {
+                            const depth = pointY - waterLevel;
+                            // Apply upward force at this specific point
+                            Matter.Body.applyForce(car.chassis, { x: pt.x, y: pointY }, { x: 0, y: -0.003 * depth });
+                        }
+                    });
+
+                    // General drag
+                    Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.95 });
+                    
+                    // S Key Logic (Nose Down / Dive)
+                    if (keys['KeyS']) {
+                        // Apply downward force at the front
+                        Matter.Body.applyForce(car.chassis, { x: car.chassis.position.x + 50, y: car.chassis.position.y }, { x: 0, y: 0.005 });
+                    }
+
                     if (Math.abs(car.chassis.angle) > 2.8) { 
                         gameState = 'gameover';
                         updateUI('gameover');
                     }
-
-                    if (car.chassis.position.y > waterLevel) {
-                        const depth = car.chassis.position.y - waterLevel;
-                        Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0, y: -0.005 * depth }); 
-                        Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.92 });
-                        Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity * 0.9);
-                    }
                 }
+                // ---------------------------------------
                 
                 if (level === 4 && alienAlive) {
                     const alienX = 20000;
@@ -1025,6 +1009,9 @@
                 document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
 
                 if (equipped.car === 'car_boat') {
+                    const downPedal = document.getElementById('down-pedal');
+                    if (keys['KeyS']) downPedal.classList.add('pressed'); else downPedal.classList.remove('pressed');
+
                     if (keys['Shift'] && canBoost && boostFuel > 0) {
                         isBoosting = true; boostFuel = Math.max(0, boostFuel - (100/300)); 
                     } else { isBoosting = false; }
@@ -1055,18 +1042,17 @@
                     }
                 } else { 
                      // BOAT CONTROL
-                     let moveForce = 0.012; 
-                     let maxBoatSpeed = 1.0; 
+                     let moveForce = 0.06; 
+                     let maxBoatSpeed = 4.0; 
                      if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
-                     // Apply Perk Multiplier
-                     if(speedBoostPerk.active) { moveForce *= 2; maxBoatSpeed *= 2; }
 
                      if (keys['KeyD'] && car.chassis.velocity.x < maxBoatSpeed) {
                          Matter.Body.applyForce(car.chassis, car.chassis.position, { x: moveForce, y: 0 }); 
-                         const currentAngle = car.chassis.angle;
-                         Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity * 0.5); 
-                         if (currentAngle < -0.1) Matter.Body.setAngularVelocity(car.chassis, 0.05); 
-                         if (currentAngle > 0.1) Matter.Body.setAngularVelocity(car.chassis, -0.05); 
+                         // STABILIZATION FEATURE
+                         if (car.chassis.angle < -0.2) { // Nose is UP
+                             // Apply downward angular force to stabilize
+                             Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.02);
+                         }
                      }
                      if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.008, y: 0 });
                 }
@@ -1111,15 +1097,19 @@
                 for(let i=0; i<15; i++) { 
                     let speed = (time * 100) + (i * 50);
                     let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
-                    if(fx < -100) fx += (GAME_WIDTH + 1000); 
+                    if(fx < -50) fx += (GAME_WIDTH + 800);
                     
                     // Calculate exactly where the water is at this Fish's X
                     const waterH = calculateWaterHeight(fx, time);
-                    const fy = waterH + 50 + (i * 20); // Position below the surface
+                    const fy = waterH + 80; // 4cm (approx 80px) below surface
 
-                    ctx.fillStyle = "#A855F7"; 
-                    ctx.font = "bold 40px Arial";
-                    ctx.fillText("🐟", fx, fy); 
+                    ctx.save();
+                    ctx.translate(fx, fy);
+                    ctx.scale(i % 2 === 0 ? 1 : -1, 1); // Flip some fish
+                    ctx.font = "40px Arial";
+                    ctx.fillStyle = "#A855F7"; // Bright purple
+                    ctx.fillText("🐟", 0, 0);
+                    ctx.restore();
                 } 
             }
             else if (level === 4) {
@@ -1181,37 +1171,14 @@
                     ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
                     ctx.fill();
 
-                    // PERK DRAWING
-                    if (level === 5) {
-                         const bodies = Matter.Composite.allBodies(engine.world);
-                         bodies.forEach(b => {
-                             if(b.label === 'perk_speed') {
-                                 ctx.save();
-                                 ctx.translate(b.position.x, b.position.y);
-                                 // Float effect
-                                 ctx.translate(0, Math.sin(time * 5) * 10);
-                                 ctx.fillStyle = "#00FFFF";
-                                 ctx.fillRect(-30, -30, 60, 60);
-                                 ctx.strokeStyle = "white";
-                                 ctx.lineWidth = 4;
-                                 ctx.strokeRect(-30, -30, 60, 60);
-                                 ctx.font = "40px Arial";
-                                 ctx.fillStyle = "white";
-                                 ctx.textAlign = "center";
-                                 ctx.textBaseline = "middle";
-                                 ctx.fillText("⚡", 0, 0);
-                                 ctx.restore();
-                             }
-                         });
-                    }
-
                     // KRAKEN DRAWING
                     if (krakenState.active) {
                         ctx.save();
-                        const finishX = LEVEL_CONFIG[5].targetDistance * 100;
-                        ctx.translate(finishX - 1000, krakenState.y); 
+                        // Kraken rises at 7500 + 500 (offset) = 8000
+                        ctx.translate(8000, krakenState.y); 
                         ctx.font = "200px Arial";
                         ctx.fillText("🐙", 0, 0);
+                        
                         ctx.font = "bold 40px Comic Sans MS";
                         ctx.fillStyle = "white";
                         ctx.strokeStyle = "black";
@@ -1232,6 +1199,25 @@
                     }
                     ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
                     ctx.fill();
+                    
+                    // NEW FISH DRAWING (VISIBLE ON TOP)
+                    for(let i=0; i<15; i++) { 
+                        let speed = (time * 100) + (i * 50);
+                        let fx = -camera.x + ((i * 300 + time * 50) % (GAME_WIDTH + 800));
+                        if(fx < -50) fx += (GAME_WIDTH + 800);
+                        
+                        // Calculate wave height at this specific X to place fish relative to water
+                        const waveHeightAtFishX = calculateWaterHeight(fx, time);
+                        const fy = waveHeightAtFishX + 80; // 4cm (approx 80px) below surface
+
+                        ctx.save();
+                        ctx.translate(fx, fy);
+                        ctx.scale(i % 2 === 0 ? 1 : -1, 1); // Flip some fish
+                        ctx.font = "40px Arial";
+                        ctx.fillStyle = "#A855F7"; // Bright purple
+                        ctx.fillText("🐟", 0, 0);
+                        ctx.restore();
+                    }
                 } else {
                     bodies.forEach(body => {
                         if (body.label === 'ground') {
