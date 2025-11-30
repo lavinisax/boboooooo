@@ -465,7 +465,7 @@
                      <button class="btn-bug" onclick="openBugReport()" id="btn-bug">BUG REPORT 🐞</button>
                 </div>
                 <div class="settings-section">
-                    <button class="btn-reset" style="background:black; border:1px solid red; color:red; font-size:0.8rem;" onclick="resetGameData()">VERİLERİ SIFIRLA ⚠️</button>
+                    <button class="btn-reset" id="btn-reset" style="background:black; border:1px solid red; color:red; font-size:0.8rem;" onclick="resetGameData()">VERİLERİ SIFIRLA ⚠️</button>
                 </div>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back4">GERİ DÖN</button>
@@ -533,12 +533,12 @@
         let alienAlive = true;
 
         const SHOP_ITEMS = [
-            { id: 'car_boat', type: 'car', name: 'Tekne', price: 600, icon: '🚤' },
-            { id: 'driver_zombie', type: 'driver', name: 'Zombi Bob', price: 5000, icon: '🧟' },
-            { id: 'driver_alien', type: 'driver', name: 'Uzaylı', price: 10000, icon: '👽' },
-            { id: 'car_blue', type: 'car', name: 'Mavi Şimşek', price: 15000, icon: '🚙' },
-            { id: 'car_gold', type: 'car', name: 'Altın Kral', price: 50000, icon: '👑' },
-            { id: 'acc_turbo', type: 'accessory', name: 'Turbo Motor', price: 20000, icon: '🚀' }
+            { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
+            { id: 'driver_zombie', type: 'driver', price: 5000, icon: '🧟' },
+            { id: 'driver_alien', type: 'driver', price: 10000, icon: '👽' },
+            { id: 'car_blue', type: 'car', price: 15000, icon: '🚙' },
+            { id: 'car_gold', type: 'car', price: 50000, icon: '👑' },
+            { id: 'acc_turbo', type: 'accessory', price: 20000, icon: '🚀' }
         ];
 
         const DISPLAY_ITEMS_IDS = ['car_boat']; 
@@ -550,7 +550,7 @@
         }
 
         function resetGameData() {
-            if(confirm("Tüm ilerlemen silinecek! Emin misin?")) {
+            if(confirm(TEXTS[currentLang].resetConfirm)) {
                 localStorage.removeItem('boombob_wallet');
                 localStorage.removeItem('boombob_inventory');
                 localStorage.removeItem('boombob_equipped');
@@ -574,7 +574,18 @@
                 panic: "0 IQ OYNAYIŞ", ohno: "EYVAH 😱", broke: "PARASIZ EZİK!", next: "SONRAKİ LEVEL",
                 finishGame: "Tüm Leveller Bitti! Başa dönülüyor.", equip: "KUŞAN", equipped: "KUŞANDIN", buy: "SATIN AL",
                 drownTitle: "BOĞULDUN", drownMsg: "ARE U DUMB?",
-                boatBan: "Tekneler karada gitmez kaptan! 🚫<br>Varsayılan arabaya geçiliyor."
+                boatBan: "Tekneler karada gitmez kaptan! 🚫<br>Varsayılan arabaya geçiliyor.",
+                resetBtn: "VERİLERİ SIFIRLA ⚠️", resetConfirm: "Tüm ilerlemen silinecek! Emin misin?",
+                items: {
+                    'car_boat': 'Tekne',
+                    'driver_zombie': 'Zombi Bob',
+                    'driver_alien': 'Uzaylı',
+                    'car_blue': 'Mavi Şimşek',
+                    'car_gold': 'Altın Kral',
+                    'acc_turbo': 'Turbo Motor',
+                    'driver_default': 'Bob',
+                    'car_default': 'Kırmızı Araba'
+                }
             },
             en: {
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
@@ -589,7 +600,18 @@
                 panic: "0 IQ GAMEPLAY", ohno: "OH NOO 😱", broke: "HAHA BROKE LOSER!", next: "NEXT LEVEL",
                 finishGame: "All Levels Completed! Returning to start.", equip: "EQUIP", equipped: "EQUIPPED", buy: "BUY",
                 drownTitle: "DROWNED", drownMsg: "ARE U DUMB?",
-                boatBan: "Boats don't go on land, captain! 🚫<br>Switching to default car."
+                boatBan: "Boats don't go on land, captain! 🚫<br>Switching to default car.",
+                resetBtn: "RESET DATA ⚠️", resetConfirm: "All progress will be lost! Are you sure?",
+                items: {
+                    'car_boat': 'Boat',
+                    'driver_zombie': 'Zombie Bob',
+                    'driver_alien': 'Alien',
+                    'car_blue': 'Blue Lightning',
+                    'car_gold': 'Gold King',
+                    'acc_turbo': 'Turbo Engine',
+                    'driver_default': 'Bob',
+                    'car_default': 'Red Car'
+                }
             }
         };
 
@@ -608,7 +630,7 @@
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
                 'title-gameover': t.gameOver, 'txt-skill': t.skillIssue, 'btn-retry': t.tryAgain, 'btn-menu1': t.mainMenu,
-                'title-win': t.winTitle, 'btn-next': t.next
+                'title-win': t.winTitle, 'btn-next': t.next, 'btn-reset': t.resetBtn
             };
             for (const [id, text] of Object.entries(ids)) { const el = document.getElementById(id); if(el) el.innerHTML = text; }
             renderShop(); renderInventory();
@@ -643,7 +665,9 @@
 
                         const div = document.createElement('div'); 
                         div.className = `shop-item`;
-                        div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-price">🪙 ${item.price}</div>`;
+                        // İSİM ARTIK DİNAMİK ALINIYOR
+                        const itemName = TEXTS[currentLang].items[item.id] || item.id;
+                        div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${itemName}</div><div class="item-price">🪙 ${item.price}</div>`;
                         
                         div.addEventListener('click', () => buyItem(item));
                         
@@ -675,8 +699,8 @@
             const grid = document.createElement('div'); grid.className = 'shop-grid';
             
             const allItems = [ 
-                { id: 'driver_default', type: 'driver', name: 'Bob', icon: '😐' }, 
-                { id: 'car_default', type: 'car', name: 'Kırmızı', icon: '🚗' }, 
+                { id: 'driver_default', type: 'driver', icon: '😐' }, 
+                { id: 'car_default', type: 'car', icon: '🚗' }, 
                 ...SHOP_ITEMS.filter(i => inventory.includes(i.id)) 
             ];
             
@@ -684,7 +708,9 @@
                 const isEquipped = equipped[item.type] === item.id;
                 const div = document.createElement('div'); 
                 div.className = `shop-item ${isEquipped ? 'equipped' : ''}`;
-                div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${item.name}</div><div class="item-status">${isEquipped ? TEXTS[currentLang].equipped : TEXTS[currentLang].equip}</div>`;
+                // İSİM ARTIK DİNAMİK ALINIYOR
+                const itemName = TEXTS[currentLang].items[item.id] || item.id;
+                div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${itemName}</div><div class="item-status">${isEquipped ? TEXTS[currentLang].equipped : TEXTS[currentLang].equip}</div>`;
                 div.onclick = () => equipItem(item);
                 grid.appendChild(div);
             });
@@ -923,7 +949,11 @@
             }
             // --------------------------
 
-            const chassis = Bodies.rectangle(startX, startY, 130, 40, { density: 0.004, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } });
+            // DENSITY REDUCED FOR BOAT (0.002 instead of 0.004)
+            let density = 0.004;
+            if(equipped.car === 'car_boat') density = 0.002;
+
+            const chassis = Bodies.rectangle(startX, startY, 130, 40, { density: density, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } });
             const wheelRadius = 18; 
             const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
             const wheelOffset = 35; 
@@ -1039,8 +1069,15 @@
                     const waterLevel = (GAME_HEIGHT * 0.7) + Math.sin((car.chassis.position.x / 60) * 0.1) * 30; // Matches new wave height
                     if (car.chassis.position.y > waterLevel) {
                         const depth = car.chassis.position.y - waterLevel;
-                        Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0, y: -0.008 * depth });
-                        Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.95, y: car.chassis.velocity.y * 0.9 });
+                        
+                        // INCREASED UPWARD FORCE FOR BETTER FLOATING (0.025 instead of 0.006)
+                        Matter.Body.applyForce(car.chassis, car.chassis.position, { x: 0, y: -0.025 * depth });
+                        
+                        // DAMPING TO PREVENT FLYING
+                        Matter.Body.setVelocity(car.chassis, { 
+                            x: car.chassis.velocity.x * 0.98, 
+                            y: car.chassis.velocity.y * 0.9 
+                        });
                         Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity * 0.9);
                     }
                 }
@@ -1126,7 +1163,7 @@
                      }
                 }
                 
-                if (keys['KeyW'] && equipped.car !== 'car_boat') { 
+                if (keys['KeyW']) { 
                     Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); 
                 }
 
