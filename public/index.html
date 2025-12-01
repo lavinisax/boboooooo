@@ -394,6 +394,10 @@
                     <span id="lvl-btn-5">LEVEL 5: OCEAN LEVEL</span>
                     <span class="level-info">150m</span>
                 </button>
+                <button class="level-btn" onclick="selectLevel(6)">
+                    <span id="lvl-btn-6" style="color:#EF4444;">LEVEL 6: MAGMA 🌋</span>
+                    <span class="level-info">300m</span>
+                </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
         </div>
@@ -514,6 +518,7 @@
                 play: "OYNA", shop: "MAĞAZA 🛒", inventory: "ÇANTA 🎒", levels: "BÖLÜMLER 🗺️", settings: "AYARLAR ⚙️", back: "GERİ DÖN",
                 level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
                 level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: OKYANUS",
+                level6Name: "LEVEL 6: YANARDAĞ ZİRVESİ",
                 tutorial: "D-İLERİ  A-GERİ  SPACE-FREN  S-BURUN AŞAĞI", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
                 winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
@@ -533,6 +538,7 @@
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
                 level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: OCEAN",
+                level6Name: "LEVEL 6: MAGMA PEAK",
                 tutorial: "D-GAS  A-BACK  SPACE-BRAKE  S-NOSE DOWN", level3Msg: "NOW IT'S GETTING HARDER... 😈",
                 winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
@@ -561,6 +567,7 @@
                 'title-shop': t.shopTitle, 'title-inventory': t.inventoryTitle, 'title-levels': t.levelsTitle, 'title-settings': t.settingsTitle,
                 'lvl-btn-1': t.level1Name + " - 140m", 'lvl-btn-2': t.level2Name + " - 100m", 'lvl-btn-3': t.level3Name + " - 200m",
                 'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 150m",
+                'lvl-btn-6': t.level6Name + " - 300m", 
                 'lbl-lang': t.langLabel, 'btn-toggle-sugg': t.suggTitle, 'btn-submit': t.submit,
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
@@ -653,14 +660,21 @@
         function equipItem(item) { equipped[item.type] = item.id; saveGameData(); renderInventory(); }
 
         let engine, car, driverHead;
-        let coins = [], particles = [], fish = [], seagulls = [];
+        let coins = [], particles = [], fish = [], seagulls = [], meteors = []; 
         let gameState = 'start', score = 0, level = 1;
         let animationFrameId, cloudOffset = 0;
         let camera = { x: 0, y: 0 };
         let tutorialState = { A: false, D: false, Space: false };
         let isPaused = false;
 
-        const LEVEL_CONFIG = { 1: { targetDistance: 140 }, 2: { targetDistance: 100 }, 3: { targetDistance: 200 }, 4: { targetDistance: 240 }, 5: { targetDistance: 150 } };
+        const LEVEL_CONFIG = { 
+            1: { targetDistance: 140 }, 
+            2: { targetDistance: 100 }, 
+            3: { targetDistance: 200 }, 
+            4: { targetDistance: 240 }, 
+            5: { targetDistance: 150 },
+            6: { targetDistance: 300 } 
+        };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
         const boatImg = new Image(); boatImg.src = 'boat.png';
@@ -697,7 +711,6 @@
             if (e.key === 'Shift') keys['Shift'] = true;
             else keys[e.code] = true;
             
-            // ESC KEY LOGIC ADDED HERE
             if (e.code === 'Escape') {
                 if(gameState === 'playing' || isPaused) toggleInGameSettings();
             }
@@ -740,7 +753,6 @@
             document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active');
             document.getElementById('level3-message').classList.remove('active'); document.getElementById('broke-message').classList.remove('active');
             document.getElementById('dumb-message').classList.remove('active');
-            // removed perk-indicator as requested
 
             if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
             else if (state === 'playing') {
@@ -762,8 +774,13 @@
                 document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
                 if (level === 1 && (!tutorialState.A || !tutorialState.D || !tutorialState.Space)) document.getElementById('tutorial-text').style.display = 'block';
                 if (level === 3) { const l3m = document.getElementById('level3-message'); l3m.classList.add('active'); setTimeout(() => l3m.classList.remove('active'), 4000); }
-                let bg = '#93C5FD'; if(level === 4) bg = '#1e1b4b'; if(level === 5) bg = '#60A5FA'; 
+                
+                let bg = '#93C5FD'; 
+                if(level === 4) bg = '#1e1b4b'; 
+                if(level === 5) bg = '#60A5FA'; 
+                if(level === 6) bg = '#2a0a0a'; 
                 document.getElementById('game-container').style.backgroundColor = bg;
+
             } else if (state === 'gameover') {
                 document.getElementById('gameover-screen').style.display = 'flex'; document.getElementById('final-score').innerText = score; document.getElementById('final-coins').innerText = wallet;
             } else if (state === 'win') {
@@ -782,7 +799,7 @@
                 renderInventory();
             }
 
-            gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; 
+            gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; meteors = [];
             tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
             boostFuel = 100; spawnInvincibility = false; alienAlive = true; 
             krakenState = { active: false, y: 1000, msgAlpha: 0 };
@@ -801,7 +818,6 @@
         function nextLevel() { if (LEVEL_CONFIG[level + 1]) { level++; gameState = 'start'; startGame(); } else { alert(TEXTS[currentLang].finishGame); level = 1; gameState = 'start'; updateUI('start'); } }
         
         function calculateWaterHeight(x, time) {
-            // Lower amplitude for manageable waves (70 instead of 120)
             return (GAME_HEIGHT * 0.7) + Math.sin(time + x * 0.003) * 70 + Math.sin(time * 2 + x * 0.01) * 20;
         }
 
@@ -824,8 +840,13 @@
                     else if (level === 2) { change = Math.sin(i * 0.1) * 30 + Math.sin(i * 0.2) * 40; if (i % 50 > 40) change -= 50; }
                     else if (level === 3) { change = Math.sin(i * 0.15) * 40 + Math.sin(i * 0.25) * 20; if (i % 40 > 30) change += 40; if (i % 60 > 50) change -= 30; }
                     else if (level === 4) { if(i % 15 > 10) { x += segmentWidth; continue; } change = Math.sin(i * 0.1) * 30; }
-                    // Level 5 terrain is just a sensor floor, visual waves are separate
                     else if (level === 5) { change = 0; } 
+                    else if (level === 6) { 
+                        // DÜZELTİLMİŞ MAGMA ZEMİNİ:
+                        // Frekansı düşürdük (0.4 -> 0.2) ve gürültüyü azalttık
+                        change = Math.sin(i * 0.2) * 50 + (Math.random() - 0.5) * 20;
+                        if (i % 25 === 0) change -= 40; // Kraterler artık o kadar derin değil
+                    }
                 }
                 const nextY = (GAME_HEIGHT * 0.7) + change; const angle = Math.atan2(nextY - y, segmentWidth);
                 
@@ -838,7 +859,6 @@
                 
                 if (i > 10 && i % 6 === 0 && Math.random() > 0.3) {
                     let coinY = (y + nextY) / 2 - 50;
-                    // In L5, coins need to be relative to the "average" water line since physics water moves
                     if (level === 5) coinY = (GAME_HEIGHT * 0.7) - 20; 
 
                     const coinX = x + segmentWidth / 2;
@@ -862,14 +882,11 @@
             let startX = 200; let startY = GAME_HEIGHT * 0.5;
             if (level === 5) { startX = 100; startY = GAME_HEIGHT * 0.4; }
 
-            // Increased density slightly for "heavier" feel
             let density = 0.004; if(equipped.car === 'car_boat') density = 0.002;
-            // INCREASED INERTIA MANUALLY FOR STABILITY
             const chassisOptions = { density: density, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
-            if(equipped.car === 'car_boat') chassisOptions.inertia = Infinity; // Prevent flipping unless forced? No, just high number
+            if(equipped.car === 'car_boat') chassisOptions.inertia = Infinity; 
             
             const chassis = Bodies.rectangle(startX, startY, 130, 40, chassisOptions);
-            // Reset inertia to allow movement but be heavy
             if(equipped.car === 'car_boat') Matter.Body.setInertia(chassis, 50000);
 
             const wheelRadius = 18; 
@@ -904,9 +921,9 @@
                     const { bodyA, bodyB } = pairs[i];
                     const labels = [bodyA.label, bodyB.label];
                     
-                    if (labels.includes('driverHead') && labels.includes('ground')) { 
-                        if (level === 5 && isBoat) {
-                             // No death on touch for boat
+                    if (labels.includes('driverHead') && (labels.includes('ground') || labels.includes('meteor'))) { 
+                        if (level === 5 && isBoat && !labels.includes('meteor')) {
+                             // No death
                         } else { 
                              gameState = 'gameover'; updateUI('gameover'); 
                         }
@@ -941,6 +958,31 @@
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
 
+                if (level === 6 && gameState === 'playing' && !isPaused) {
+                    if (Math.random() > 0.985) { 
+                        const meteorX = car.chassis.position.x + 300 + Math.random() * 800;
+                        const meteorRad = 20 + Math.random() * 30;
+                        
+                        const meteor = Matter.Bodies.circle(meteorX, -500, meteorRad, {
+                            density: 0.04, 
+                            friction: 0.5,
+                            restitution: 0.2,
+                            label: 'meteor',
+                        });
+                        
+                        Matter.Body.setVelocity(meteor, { x: -5 - Math.random()*5, y: 10 });
+                        meteors.push(meteor);
+                        Matter.Composite.add(engine.world, meteor);
+                    }
+
+                    for (let i = meteors.length - 1; i >= 0; i--) {
+                        if (meteors[i].position.y > GAME_HEIGHT + 500) {
+                            Matter.Composite.remove(engine.world, meteors[i]);
+                            meteors.splice(i, 1);
+                        }
+                    }
+                }
+
                 if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
                     document.getElementById('dumb-message').classList.add('active');
                     setTimeout(() => { gameState = 'gameover'; updateUI('gameover'); }, 1500);
@@ -954,11 +996,9 @@
                     Matter.Body.setAngularVelocity(car.chassis, 0);
                 }
                 
-                // --- DUAL POINT BUOYANCY LOGIC (NEW) ---
                 if (level === 5 && equipped.car === 'car_boat') {
                     const time = Date.now() / 1000;
                     
-                    // Two points: Bow (Front + 40) and Stern (Back - 40)
                     const points = [
                         { x: car.chassis.position.x - 40, offset: -40 },
                         { x: car.chassis.position.x + 40, offset: 40 }
@@ -966,22 +1006,17 @@
 
                     points.forEach(pt => {
                         const waterLevel = calculateWaterHeight(pt.x, time);
-                        // Approx depth at this point (taking rotation into account roughly)
                         const pointY = car.chassis.position.y + (Math.sin(car.chassis.angle) * pt.offset);
 
                         if (pointY > waterLevel) {
                             const depth = pointY - waterLevel;
-                            // Apply upward force at this specific point
                             Matter.Body.applyForce(car.chassis, { x: pt.x, y: pointY }, { x: 0, y: -0.003 * depth });
                         }
                     });
 
-                    // General drag
                     Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.95 });
                     
-                    // S Key Logic (Nose Down / Dive)
                     if (keys['KeyS']) {
-                        // Apply downward force at the front
                         Matter.Body.applyForce(car.chassis, { x: car.chassis.position.x + 50, y: car.chassis.position.y }, { x: 0, y: 0.005 });
                     }
 
@@ -990,7 +1025,6 @@
                         updateUI('gameover');
                     }
                 }
-                // ---------------------------------------
                 
                 if (level === 4 && alienAlive) {
                     const alienX = 20000;
@@ -1041,16 +1075,13 @@
                         if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04);
                     }
                 } else { 
-                     // BOAT CONTROL
                      let moveForce = 0.06; 
                      let maxBoatSpeed = 4.0; 
                      if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
 
                      if (keys['KeyD'] && car.chassis.velocity.x < maxBoatSpeed) {
                          Matter.Body.applyForce(car.chassis, car.chassis.position, { x: moveForce, y: 0 }); 
-                         // STABILIZATION FEATURE
-                         if (car.chassis.angle < -0.2) { // Nose is UP
-                             // Apply downward angular force to stabilize
+                         if (car.chassis.angle < -0.2) { 
                              Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.02);
                          }
                      }
@@ -1078,8 +1109,15 @@
         function draw() {
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.save();
             ctx.translate(camera.x, camera.y);
-            ctx.fillStyle = level === 5 ? '#60A5FA' : (level === 4 ? '#1e1b4b' : '#87CEEB'); 
+            
+            let bgColor = '#87CEEB';
+            if (level === 4) bgColor = '#1e1b4b';
+            if (level === 5) bgColor = '#60A5FA';
+            if (level === 6) bgColor = '#2a0a0a';
+            
+            ctx.fillStyle = bgColor;
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
+            
             if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
             
             if (level === 5 && car.chassis.position.x > (LEVEL_CONFIG[5].targetDistance * 100) - 5000) {
@@ -1087,27 +1125,59 @@
             }
 
             const time = Date.now() / 1000;
+            
+            if (level === 6) {
+                ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+                for(let i=0; i<50; i++) {
+                    const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200));
+                    const ay = -camera.y + ((i * 243 + time * 200) % (GAME_HEIGHT + 200));
+                    ctx.fillRect(ax, ay, 4, 4);
+                }
+                
+                meteors.forEach(m => {
+                    ctx.save();
+                    ctx.translate(m.position.x, m.position.y);
+                    ctx.rotate(m.angle);
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, m.circleRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#451a03'; 
+                    ctx.fill();
+                    
+                    ctx.beginPath();
+                    ctx.arc(0, 0, m.circleRadius * 0.7, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.fill();
+                    
+                    ctx.globalAlpha = 0.6;
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(-m.circleRadius, -m.circleRadius, m.circleRadius, 0, Math.PI*2);
+                    ctx.fill();
+                    
+                    ctx.restore();
+                });
+            }
+
             if(level === 5) { 
                 for(let i=0; i<5; i++) { 
                     const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200); 
                     const uy = -camera.y + 100 + Math.sin(time + i) * 50; 
                     ctx.font = "40px Arial"; ctx.fillText("🐦", ux, uy); 
                 } 
-                // FISH DRAWING - Use Same Water Height Logic
                 for(let i=0; i<15; i++) { 
                     let speed = (time * 100) + (i * 50);
                     let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
                     if(fx < -50) fx += (GAME_WIDTH + 800);
                     
-                    // Calculate exactly where the water is at this Fish's X
                     const waterH = calculateWaterHeight(fx, time);
-                    const fy = waterH + 80; // 4cm (approx 80px) below surface
+                    const fy = waterH + 80;
 
                     ctx.save();
                     ctx.translate(fx, fy);
-                    ctx.scale(i % 2 === 0 ? 1 : -1, 1); // Flip some fish
+                    ctx.scale(i % 2 === 0 ? 1 : -1, 1); 
                     ctx.font = "40px Arial";
-                    ctx.fillStyle = "#A855F7"; // Bright purple
+                    ctx.fillStyle = "#A855F7";
                     ctx.fillText("🐟", 0, 0);
                     ctx.restore();
                 } 
@@ -1154,27 +1224,23 @@
                     }
                 }
 
-                // --- CUSTOM WAVE DRAWING FOR LEVEL 5 (UPDATED) ---
                 if (level === 5) {
                     const baseHeight = GAME_HEIGHT * 0.7;
                     const screenStart = -camera.x - 100;
                     const screenEnd = -camera.x + GAME_WIDTH + 100;
                     
-                    // Layer 3 (Back)
                     ctx.fillStyle = '#1e3a8a'; 
                     ctx.beginPath();
                     ctx.moveTo(screenStart, GAME_HEIGHT + 200);
                     for (let x = screenStart; x <= screenEnd; x += 30) {
-                        const y = calculateWaterHeight(x, time); // Use shared math
+                        const y = calculateWaterHeight(x, time);
                         ctx.lineTo(x, y);
                     }
                     ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
                     ctx.fill();
 
-                    // KRAKEN DRAWING
                     if (krakenState.active) {
                         ctx.save();
-                        // Kraken rises at 7500 + 500 (offset) = 8000
                         ctx.translate(8000, krakenState.y); 
                         ctx.font = "200px Arial";
                         ctx.fillText("🐙", 0, 0);
@@ -1188,33 +1254,29 @@
                         ctx.restore();
                     }
 
-                    // Layer 1 (Front)
                     ctx.fillStyle = 'rgba(147, 197, 253, 0.6)';
                     ctx.beginPath();
                     ctx.moveTo(screenStart, GAME_HEIGHT + 200);
                     for (let x = screenStart; x <= screenEnd; x += 15) {
-                         // Slightly offset for visual depth
                         const y = calculateWaterHeight(x, time) + 10; 
                         ctx.lineTo(x, y);
                     }
                     ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
                     ctx.fill();
                     
-                    // NEW FISH DRAWING (VISIBLE ON TOP)
                     for(let i=0; i<15; i++) { 
                         let speed = (time * 100) + (i * 50);
                         let fx = -camera.x + ((i * 300 + time * 50) % (GAME_WIDTH + 800));
                         if(fx < -50) fx += (GAME_WIDTH + 800);
                         
-                        // Calculate wave height at this specific X to place fish relative to water
                         const waveHeightAtFishX = calculateWaterHeight(fx, time);
-                        const fy = waveHeightAtFishX + 80; // 4cm (approx 80px) below surface
+                        const fy = waveHeightAtFishX + 80;
 
                         ctx.save();
                         ctx.translate(fx, fy);
-                        ctx.scale(i % 2 === 0 ? 1 : -1, 1); // Flip some fish
+                        ctx.scale(i % 2 === 0 ? 1 : -1, 1);
                         ctx.font = "40px Arial";
-                        ctx.fillStyle = "#A855F7"; // Bright purple
+                        ctx.fillStyle = "#A855F7";
                         ctx.fillText("🐟", 0, 0);
                         ctx.restore();
                     }
@@ -1222,8 +1284,18 @@
                     bodies.forEach(body => {
                         if (body.label === 'ground') {
                             ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
-                            ctx.beginPath(); ctx.rect(-70, -300, 140, 600); ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; ctx.fill();
-                            ctx.beginPath(); ctx.rect(-70, -300, 140, 20); ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); ctx.fill();
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 600); 
+                            
+                            if (level === 6) ctx.fillStyle = '#1f1f1f'; 
+                            else ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; 
+                            ctx.fill();
+                            
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 20); 
+                            
+                            if (level === 6) ctx.fillStyle = '#7f1d1d';
+                            else ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); 
+                            ctx.fill();
+
                             ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); 
                             ctx.restore();
                         }
@@ -1233,10 +1305,8 @@
                 bodies.forEach(body => {
                     if (body.label === 'coin' && !body.isCollected) {
                         ctx.save(); ctx.translate(body.position.x, body.position.y);
-                        // In L5, make coins float on water visually
                         if(level === 5) {
                             const floatY = calculateWaterHeight(body.position.x, time) - 30;
-                            // Update physics body to match visual float (Hack for L5 coins)
                             Matter.Body.setPosition(body, { x: body.position.x, y: floatY });
                         }
                         
