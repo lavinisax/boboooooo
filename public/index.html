@@ -365,14 +365,14 @@
                 <div class="bar-label">AGENT BOB</div>
                 <div id="hp-bar-player" class="fight-bar"></div>
             </div>
-            <div id="kill-counter-box">KILLS: <span id="kill-count-val">0</span>/10</div>
+            <div id="kill-counter-box"><span id="kill-label">LEŞ:</span> <span id="kill-count-val">0</span>/10</div>
             <div id="hp-bar-enemy-container" class="fight-bar-container">
-                <div class="bar-label" id="enemy-name">MONSTER</div>
+                <div class="bar-label" id="enemy-name">DON BOSS</div>
                 <div id="hp-bar-enemy" class="fight-bar"></div>
             </div>
-            <div id="lvl7-controls">J: TEKME / K: YUMRUK / C: ÖPÜCÜK (K.O) / SHIFT: KOŞ</div>
+            <div id="lvl7-controls"></div>
             <div id="cooldown-kiss">💋</div>
-            <div id="boss-warning">⚠️ DON BOSS ⚠️</div>
+            <div id="boss-warning">⚠️ <span id="boss-warn-text">DON BOSS</span> ⚠️</div>
         </div>
 
         <div id="dialogue-box">
@@ -577,13 +577,22 @@
         let bobAnimTimer = 0; // Timer for specific actions
         
         // LEVEL 7 DIALOGUES
-        const LVL7_DIALOGUES = [
-            { speaker: 'Bob', text: "Yolumdan çekilin ucube donlular! Ajan Bob göreve geldi!", face: '😎' },
-            { speaker: 'Monster', text: "Hahaha! Donlarımız senden daha pahalı Bob!", face: '🩲' },
-            { speaker: 'Bob', text: "O donları başınıza geçireceğim! Patronunuz nerede?", face: '😠' },
-            { speaker: 'Monster', text: "DON BOSS seni bekliyor... Ama önce bizi geçmen lazım!", face: '😈' },
-            { speaker: 'Bob', text: "Peki... Şov başlasın!", face: '🥊' }
-        ];
+        const LVL7_DIALOGUES = {
+            tr: [
+                { speaker: 'Bob', text: "Yolumdan çekilin ucube donlular! Ajan Bob göreve geldi!", face: '😎' },
+                { speaker: 'Monster', text: "Hahaha! Donlarımız senden daha pahalı Bob!", face: '🩲' },
+                { speaker: 'Bob', text: "O donları başınıza geçireceğim! Patronunuz nerede?", face: '😠' },
+                { speaker: 'Monster', text: "DON BOSS seni bekliyor... Ama önce bizi geçmen lazım!", face: '😈' },
+                { speaker: 'Bob', text: "Peki... Şov başlasın!", face: '🥊' }
+            ],
+            en: [
+                { speaker: 'Bob', text: "Out of my way, weirdo undies! Agent Bob is here!", face: '😎' },
+                { speaker: 'Monster', text: "Hahaha! Our underwear is more expensive than you Bob!", face: '🩲' },
+                { speaker: 'Bob', text: "I'll pull those undies over your heads! Where is your boss?", face: '😠' },
+                { speaker: 'Monster', text: "UNDIES BOSS is waiting... But first you must pass us!", face: '😈' },
+                { speaker: 'Bob', text: "Alright... Let the show begin!", face: '🥊' }
+            ]
+        };
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
@@ -639,6 +648,9 @@
                 drownTitle: "BOĞULDUN", drownMsg: "ARE U DUMB?",
                 boatBan: "Tekneler karada gitmez kaptan! 🚫<br>Varsayılan arabaya geçildi.",
                 resetBtn: "VERİLERİ SIFIRLA ⚠️", resetConfirm: "Tüm ilerlemen silinecek! Emin misin?",
+                lvl7Controls: "J: TEKME / K: YUMRUK / C: ÖPÜCÜK (K.O) / SHIFT: KOŞ",
+                lvl7Kills: "LEŞ:",
+                lvl7Boss: "DON BOSS",
                 items: {
                     'car_boat': 'Tekne', 'driver_zombie': 'Zombi Bob', 'driver_alien': 'Uzaylı', 'car_blue': 'Mavi Şimşek', 'car_gold': 'Altın Kral', 'acc_turbo': 'Turbo Motor', 'driver_default': 'Bob', 'car_default': 'Kırmızı Araba',
                     'driver_sigma': 'Bob Sigma', 'car_bobby': 'Bobby Car',
@@ -663,6 +675,9 @@
                 drownTitle: "DROWNED", drownMsg: "ARE U DUMB?",
                 boatBan: "Boats don't go on land, captain! 🚫<br>Switched to default car.",
                 resetBtn: "RESET DATA ⚠️", resetConfirm: "All progress will be lost! Are you sure?",
+                lvl7Controls: "J: KICK / K: PUNCH / C: KISS (K.O) / SHIFT: RUN",
+                lvl7Kills: "KILLS:",
+                lvl7Boss: "UNDIES BOSS",
                 items: {
                     'car_boat': 'Boat', 'driver_zombie': 'Zombie Bob', 'driver_alien': 'Alien', 'car_blue': 'Blue Lightning', 'car_gold': 'Gold King', 'acc_turbo': 'Turbo Engine', 'driver_default': 'Bob', 'car_default': 'Red Car',
                     'driver_sigma': 'Bob Sigma', 'car_bobby': 'Bobby Car',
@@ -691,6 +706,20 @@
                 'title-win': t.winTitle, 'btn-next': t.next, 'btn-reset': t.resetBtn
             };
             for (const [id, text] of Object.entries(ids)) { const el = document.getElementById(id); if(el) el.innerHTML = text; }
+            
+            // Level 7 Localized Updates
+            const lvl7Controls = document.getElementById('lvl7-controls');
+            if(lvl7Controls) lvl7Controls.innerText = t.lvl7Controls;
+            
+            const killLabel = document.getElementById('kill-label');
+            if(killLabel) killLabel.innerText = t.lvl7Kills;
+            
+            const bossWarnText = document.getElementById('boss-warn-text');
+            if(bossWarnText) bossWarnText.innerText = t.lvl7Boss;
+            
+            const enemyName = document.getElementById('enemy-name');
+            if(enemyName && enemyName.innerText.includes('BOSS')) enemyName.innerText = t.lvl7Boss;
+
             renderShop(); renderInventory();
         }
 
@@ -821,6 +850,168 @@
             }
         }
 
+        function drawClouds(ctx, startX, startY) {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            for (let i = 0; i < 20; i++) {
+                const cx = startX + i * 400;
+                if (cx > -200 && cx < GAME_WIDTH + 200) {
+                    const cy = startY + (i % 3) * 50;
+                    ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI * 2); ctx.arc(cx + 30, cy - 10, 50, 0, Math.PI * 2); ctx.arc(cx + 70, cy, 40, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        }
+
+        function drawRain(ctx) {
+            ctx.strokeStyle = 'rgba(200, 200, 255, 0.6)';
+            ctx.lineWidth = 2;
+            for(let i=0; i<100; i++) {
+                const rx = -camera.x + Math.random() * GAME_WIDTH;
+                const ry = -camera.y + Math.random() * GAME_HEIGHT;
+                ctx.beginPath();
+                ctx.moveTo(rx, ry);
+                ctx.lineTo(rx - 5, ry + 15); 
+                ctx.stroke();
+            }
+        }
+
+        function drawCarAndDriver(carObj, headObj) {
+            if (carObj && carObj.chassis) {
+                const wheelRad = 18;
+                const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
+
+                if(equipped.car !== 'car_boat') { 
+                        [carObj.wheelBack, carObj.wheelFront].forEach(wheel => {
+                        ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
+                        ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
+                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
+                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
+                    });
+                }
+
+                ctx.save(); ctx.translate(carObj.chassis.position.x, carObj.chassis.position.y); ctx.rotate(carObj.chassis.angle);
+                if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
+                
+                let drawImg = carImg;
+                if(equipped.car === 'car_boat') drawImg = boatImg;
+                else if(equipped.car === 'car_bobby') drawImg = carBobbyImg; 
+
+                if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
+                ctx.restore(); 
+
+                if (headObj) {
+                    ctx.save(); ctx.translate(headObj.position.x, headObj.position.y); ctx.rotate(carObj.chassis.angle); 
+                    if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
+                    
+                    let drawHead = headImg;
+                    let headXOffset = -25;
+                    if(equipped.driver === 'driver_sigma') { drawHead = headSigmaImg; headXOffset = -15; }
+
+                    if (drawHead.complete && drawHead.naturalWidth !== 0) {
+                        ctx.drawImage(drawHead, headXOffset, -25, 50, 50); ctx.filter = 'none';
+                    } else { ctx.fillStyle='#FFCC80'; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); } ctx.restore();
+                }
+            }
+        }
+
+        function drawStickman(ctx, x, y, type, action, timer) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Stickman Params
+            const color = type === 'bob' ? 'black' : 'white';
+            const headY = -50;
+            const bodyLen = 40;
+            const legLen = 30;
+            const armLen = 25;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            // Animation Math
+            let legL = Math.PI/2, legR = Math.PI/2;
+            let armL = Math.PI/2, armR = Math.PI/2;
+            
+            if (action === 'run') {
+                const runCycle = Math.sin(Date.now() / 100);
+                legL += runCycle * 0.8;
+                legR -= runCycle * 0.8;
+                armL -= runCycle * 0.8;
+                armR += runCycle * 0.8;
+            } else if (action === 'kick') {
+                legR -= 2.5; // MORE Exaggerated Kick
+                armL -= 0.5;
+            } else if (action === 'punch') {
+                armR -= 2.5; // MORE Exaggerated Punch
+            } else if (action === 'kiss') {
+                armR -= 2.5; // Hand to mouth
+                // Draw Lips
+                ctx.font = "40px Arial";
+                ctx.fillStyle = 'red';
+                ctx.fillText("💋", 30, headY);
+            }
+
+            // Body
+            ctx.beginPath();
+            ctx.moveTo(0, headY + 15);
+            ctx.lineTo(0, 0); // Torso end
+            ctx.stroke();
+            
+            // Legs
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(legL) * legLen, Math.sin(legL) * legLen);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(legR) * legLen, Math.sin(legR) * legLen);
+            ctx.stroke();
+            
+            // Arms
+            ctx.beginPath();
+            ctx.moveTo(0, headY + 25); // Shoulder
+            ctx.lineTo(Math.cos(armL) * armLen, (headY + 25) + Math.sin(armL) * armLen);
+            ctx.moveTo(0, headY + 25);
+            ctx.lineTo(Math.cos(armR) * armLen, (headY + 25) + Math.sin(armR) * armLen);
+            ctx.stroke();
+
+            // Head (Image or Shape)
+            if (type === 'bob') {
+                // Bob Suit details
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, headY+15); ctx.lineTo(0, headY+25); ctx.stroke(); // Shirt
+                ctx.strokeStyle = 'red'; 
+                ctx.beginPath(); ctx.moveTo(0, headY+15); ctx.lineTo(0, headY+20); ctx.stroke(); // Tie
+                
+                // Head
+                if (headImg.complete && headImg.naturalWidth !== 0) {
+                    ctx.drawImage(headImg, -20, headY - 20, 40, 40);
+                } else {
+                    ctx.fillStyle = '#FFCC80'; ctx.beginPath(); ctx.arc(0, headY, 15, 0, Math.PI*2); ctx.fill();
+                }
+            } else {
+                // Monster Boxers (Batmanli)
+                ctx.fillStyle = 'black';
+                ctx.fillRect(-10, -5, 20, 15); // Boxer
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath(); ctx.ellipse(0, 2, 6, 3, 0, 0, Math.PI*2); ctx.fill(); // Bat logo placeholder
+                
+                // Monster Head (Don shape or Face)
+                if (donImg.complete && donImg.naturalWidth !== 0) {
+                    ctx.drawImage(donImg, -20, headY - 20, 40, 40);
+                } else {
+                    // Fallback Head
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(0, headY, 15, 0, Math.PI*2);
+                    ctx.fill();
+                    // Angry Eyes
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(-8, headY-5, 5, 5); ctx.fillRect(3, headY-5, 5, 5);
+                }
+            }
+
+            ctx.restore();
+        }
+
         window.onload = function() {
             setLanguage(currentLang); renderShop(); renderInventory(); createFloatingHeads(); 
         };
@@ -844,8 +1035,8 @@
             // Level 7 Attacks
             if (level === 7 && lvl7State === 'fight' && !isPaused) {
                 if(e.code === 'KeyC') { tryKissAttack(); bobAction = 'kiss'; bobAnimTimer = 20; }
-                if(e.code === 'KeyJ') { performKick(); bobAction = 'kick'; bobAnimTimer = 20; } // KICK ANIMATION TRIGGER
-                if(e.code === 'KeyK') { performPunch(); bobAction = 'punch'; bobAnimTimer = 15; } // PUNCH ANIMATION TRIGGER
+                if(e.code === 'KeyJ') { performKick(); bobAction = 'kick'; bobAnimTimer = 20; } 
+                if(e.code === 'KeyK') { performPunch(); bobAction = 'punch'; bobAnimTimer = 15; }
             }
 
             if(gameState === 'playing' && !isPaused && level === 1) {
@@ -908,6 +1099,12 @@
                     document.getElementById('coin-counter').style.display = 'flex';
                     document.getElementById('coin-value').innerText = wallet;
                     document.getElementById('game-container').style.backgroundColor = '#110000'; // Bloody background
+                    
+                    // Initial Localization Set
+                    const t = TEXTS[currentLang];
+                    document.getElementById('lvl7-controls').innerText = t.lvl7Controls;
+                    document.getElementById('kill-label').innerText = t.lvl7Kills;
+                    document.getElementById('boss-warn-text').innerText = t.lvl7Boss;
                 } else {
                     // Regular Levels UI
                     document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
@@ -1007,14 +1204,10 @@
                 // IMPORTANT: Ground extended left to catch intro car
                 const ground = Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 50, GAME_WIDTH * 3, 100, { isStatic: true, label: 'ground', render: { fillStyle: '#220000' } });
                 
-                // Walls NOT added here initially, to allow car entry
-                // const leftWall = Bodies.rectangle(-50, ...); // REMOVED FOR INTRO
-                // const rightWall = ... // REMOVED FOR INTRO
-                
                 Composite.add(world, [ground]);
                 
                 // Spawn car for intro (Car enters from Left, -200)
-                let startX = -200; 
+                let startX = 50; 
                 let startY = GAME_HEIGHT - 150;
                 
                 // Car Construction (Simplified for intro)
@@ -1149,13 +1342,15 @@
 
         // LEVEL 7 HELPERS
         function showNextDialogue() {
-            if (lvl7DialogueIndex >= LVL7_DIALOGUES.length) {
+            const dialogueArray = LVL7_DIALOGUES[currentLang] || LVL7_DIALOGUES['tr']; // Select language
+            
+            if (lvl7DialogueIndex >= dialogueArray.length) {
                 document.getElementById('dialogue-box').style.display = 'none';
                 lvl7State = 'fight';
                 startLvl7Fight();
                 return;
             }
-            const d = LVL7_DIALOGUES[lvl7DialogueIndex];
+            const d = dialogueArray[lvl7DialogueIndex];
             document.getElementById('dialogue-box').style.display = 'flex';
             document.getElementById('dialogue-face').innerText = d.face;
             document.getElementById('dialogue-text').innerText = d.speaker + ": " + d.text;
@@ -1166,7 +1361,7 @@
             // Actually, let's remove everything and spawn fight scene
             Matter.Composite.clear(engine.world, false); 
             
-            const ground = Matter.Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 20, GAME_WIDTH * 2, 40, { isStatic: true, label: 'ground' });
+            const ground = Matter.Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 50, GAME_WIDTH * 3, 100, { isStatic: true, label: 'ground', render: { fillStyle: '#220000' } });
             const leftWall = Matter.Bodies.rectangle(-20, GAME_HEIGHT/2, 40, GAME_HEIGHT * 2, { isStatic: true, label: 'wall' });
             const rightWall = Matter.Bodies.rectangle(GAME_WIDTH + 20, GAME_HEIGHT/2, 40, GAME_HEIGHT * 2, { isStatic: true, label: 'wall' });
             
@@ -1204,7 +1399,7 @@
             warn.style.transform = "translate(-50%, -50%) scale(1)";
             setTimeout(() => warn.style.transform = "translate(-50%, -50%) scale(0)", 3000);
             
-            document.getElementById('enemy-name').innerText = "DON BOSS";
+            document.getElementById('enemy-name').innerText = TEXTS[currentLang].lvl7Boss;
             document.getElementById('hp-bar-enemy-container').style.display = 'block';
             document.getElementById('kill-counter-box').style.display = 'none';
         }
@@ -1335,10 +1530,17 @@
                             let speed = 3;
                             if (isSprinting) speed = 6;
                             
-                            bobAction = 'idle';
-                            if (keys['KeyD']) { Matter.Body.setVelocity(agentBobBody, { x: speed, y: agentBobBody.velocity.y }); bobAction = 'run'; }
-                            else if (keys['KeyA']) { Matter.Body.setVelocity(agentBobBody, { x: -speed, y: agentBobBody.velocity.y }); bobAction = 'run'; }
-                            else Matter.Body.setVelocity(agentBobBody, { x: 0, y: agentBobBody.velocity.y });
+                            // Only reset to idle if no action timer is active
+                            if (bobAnimTimer <= 0) {
+                                bobAction = 'idle';
+                                if (keys['KeyD']) { Matter.Body.setVelocity(agentBobBody, { x: speed, y: agentBobBody.velocity.y }); bobAction = 'run'; }
+                                else if (keys['KeyA']) { Matter.Body.setVelocity(agentBobBody, { x: -speed, y: agentBobBody.velocity.y }); bobAction = 'run'; }
+                                else Matter.Body.setVelocity(agentBobBody, { x: 0, y: agentBobBody.velocity.y });
+                            } else {
+                                // During action animation (kick/punch), stop horizontal movement or keep momentum?
+                                // Let's stop movement to emphasize the attack
+                                Matter.Body.setVelocity(agentBobBody, { x: 0, y: agentBobBody.velocity.y });
+                            }
 
                             if (keys['Space'] && Math.abs(agentBobBody.velocity.y) < 0.1) {
                                 Matter.Body.setVelocity(agentBobBody, { x: agentBobBody.velocity.x, y: -12 });
@@ -1351,8 +1553,7 @@
                             if (lvl7SprintTimer > 0) lvl7SprintTimer--;
                             if (lvl7KissCooldown > 0) lvl7KissCooldown--;
                             if (bobAnimTimer > 0) { bobAnimTimer--; } 
-                            else { if(bobAction === 'kick' || bobAction === 'punch' || bobAction === 'kiss') bobAction = 'idle'; }
-
+                            
                             // Cooldown visual
                             const cdEl = document.getElementById('cooldown-kiss');
                             if(lvl7KissCooldown > 0) { cdEl.classList.add('cd'); cdEl.innerText = Math.ceil(lvl7KissCooldown/60); }
@@ -1364,7 +1565,8 @@
                                 // Check collision with player
                                 const dx = drop.position.x - agentBobBody.position.x;
                                 const dy = drop.position.y - agentBobBody.position.y;
-                                if (Math.sqrt(dx*dx + dy*dy) < 40) {
+                                // Increased pickup radius
+                                if (Math.sqrt(dx*dx + dy*dy) < 60) {
                                     // Collect
                                     if(drop.dropType === 'wine') { lvl7BobHP = Math.min(100, lvl7BobHP + 10); particles.push({x:agentBobBody.position.x, y:agentBobBody.position.y, life:1, type:'text', text:'GÜÇ+'}); }
                                     if(drop.dropType === 'potion') { lvl7BobHP = Math.min(100, lvl7BobHP + 30); particles.push({x:agentBobBody.position.x, y:agentBobBody.position.y, life:1, type:'text', text:'CAN+'}); }
@@ -1553,15 +1755,16 @@
                 armL -= runCycle * 0.8;
                 armR += runCycle * 0.8;
             } else if (action === 'kick') {
-                legR -= 2.0; // High Kick
+                legR -= 2.5; // MORE Exaggerated Kick
                 armL -= 0.5;
             } else if (action === 'punch') {
-                armR -= 2.0; // Long Punch
+                armR -= 2.5; // MORE Exaggerated Punch
             } else if (action === 'kiss') {
                 armR -= 2.5; // Hand to mouth
                 // Draw Lips
-                ctx.font = "30px Arial";
-                ctx.fillText("💋", 20, headY);
+                ctx.font = "40px Arial";
+                ctx.fillStyle = 'red';
+                ctx.fillText("💋", 30, headY);
             }
 
             // Body
@@ -1649,8 +1852,12 @@
             
             // --- LEVEL 7 DRAWING ---
             if (level === 7) {
-                // Bloody Sun Background
-                ctx.fillStyle = '#110000'; // Dark red night
+                // Bloody Sun Background (slightly brighter now)
+                // Using a radial gradient for "Spotlight" effect
+                const grad = ctx.createRadialGradient(GAME_WIDTH/2, GAME_HEIGHT/2, 100, GAME_WIDTH/2, GAME_HEIGHT/2, 800);
+                grad.addColorStop(0, '#2a0a0a'); // Center light
+                grad.addColorStop(1, '#000000'); // Edge dark
+                ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
                 
                 // Draw Bloody Sun
@@ -1658,14 +1865,14 @@
                 const sunY = 150;
                 ctx.beginPath();
                 ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
-                ctx.fillStyle = '#880000';
-                ctx.shadowBlur = 40;
+                ctx.fillStyle = '#aa0000'; // Brighter red
+                ctx.shadowBlur = 60;
                 ctx.shadowColor = 'red';
                 ctx.fill();
                 ctx.shadowBlur = 0; // Reset
                 
                 // Floor
-                ctx.fillStyle = '#220000';
+                ctx.fillStyle = '#331111';
                 ctx.fillRect(0, GAME_HEIGHT - 50, GAME_WIDTH, 50);
 
                 if (lvl7State === 'intro_drive' || lvl7State === 'intro_stop') {
@@ -1686,6 +1893,16 @@
                     if (agentBobBody) {
                         let anim = bobAction;
                         if(bobAnimTimer > 0) anim = bobAction; 
+                        
+                        // Spotlight on Player
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'lighter';
+                        ctx.fillStyle = 'rgba(255, 200, 200, 0.1)';
+                        ctx.beginPath();
+                        ctx.arc(agentBobBody.position.x, agentBobBody.position.y, 150, 0, Math.PI*2);
+                        ctx.fill();
+                        ctx.restore();
+
                         // Override action for specific animation frames if needed
                         drawStickman(ctx, agentBobBody.position.x, agentBobBody.position.y, 'bob', anim, animFrame);
                     }
@@ -1713,8 +1930,7 @@
             
             // --- REGULAR LEVELS DRAWING ---
             else {
-                // ... (Level 1-6 Draw Logic is same as previous, omitted for brevity as requested not to change unrelated parts, but keeping it functional)
-                // Re-inserting standard drawing logic here to ensure no regression
+                // ... (Keeping existing logic for levels 1-6) ...
                 if (level === 6) {
                     ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
                     for(let i=0; i<50; i++) { const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200)); const ay = -camera.y + ((i * 243 + time * 200) % (GAME_HEIGHT + 200)); ctx.fillRect(ax, ay, 4, 4); }
@@ -1787,56 +2003,6 @@
             });
 
             ctx.restore();
-        }
-
-        function drawCarAndDriver(carObj, headObj) {
-            if (carObj && carObj.chassis) {
-                const wheelRad = 18;
-                const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
-
-                if(equipped.car !== 'car_boat') { 
-                        [carObj.wheelBack, carObj.wheelFront].forEach(wheel => {
-                        ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
-                        ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
-                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
-                    });
-                }
-
-                ctx.save(); ctx.translate(carObj.chassis.position.x, carObj.chassis.position.y); ctx.rotate(carObj.chassis.angle);
-                if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
-                
-                let drawImg = carImg;
-                if(equipped.car === 'car_boat') drawImg = boatImg;
-                else if(equipped.car === 'car_bobby') drawImg = carBobbyImg; 
-
-                if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
-                ctx.restore(); 
-
-                if (headObj) {
-                    ctx.save(); ctx.translate(headObj.position.x, headObj.position.y); ctx.rotate(carObj.chassis.angle); 
-                    if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
-                    
-                    let drawHead = headImg;
-                    let headXOffset = -25;
-                    if(equipped.driver === 'driver_sigma') { drawHead = headSigmaImg; headXOffset = -15; }
-
-                    if (drawHead.complete && drawHead.naturalWidth !== 0) {
-                        ctx.drawImage(drawHead, headXOffset, -25, 50, 50); ctx.filter = 'none';
-                    } else { ctx.fillStyle='#FFCC80'; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); } ctx.restore();
-                }
-            }
-        }
-
-        function drawClouds(ctx, startX, startY) {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            for (let i = 0; i < 20; i++) {
-                const cx = startX + i * 400;
-                if (cx > -200 && cx < GAME_WIDTH + 200) {
-                    const cy = startY + (i % 3) * 50;
-                    ctx.beginPath(); ctx.arc(cx, cy, 40, 0, Math.PI * 2); ctx.arc(cx + 30, cy - 10, 50, 0, Math.PI * 2); ctx.arc(cx + 70, cy, 40, 0, Math.PI * 2); ctx.fill();
-                }
-            }
         }
 
         setLanguage(currentLang); renderShop(); renderInventory();
