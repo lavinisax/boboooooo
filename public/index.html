@@ -310,7 +310,14 @@
         #hp-bar-enemy { width: 100%; background: linear-gradient(90deg, #991B1B, #EF4444); }
         .bar-label { position: absolute; top: 0; left: 10px; font-weight: bold; font-family: 'Impact'; font-size: 1.2rem; line-height: 30px; text-shadow: 1px 1px 0 black; z-index: 2; }
         
-        #lvl7-controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 55; font-family: monospace; font-weight: bold; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; color:white; }
+        #kill-counter-box {
+            position: absolute; top: 20px; right: 20px; 
+            background: rgba(0,0,0,0.7); border: 2px solid white; 
+            padding: 10px 20px; border-radius: 10px; color: #EF4444; 
+            font-family: 'Impact'; font-size: 2rem; display:none; z-index:55;
+        }
+
+        #lvl7-controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center; z-index: 55; font-family: monospace; font-weight: bold; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; color:white; width: 80%; }
         
         #dialogue-box {
             position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); width: 80%;
@@ -358,11 +365,12 @@
                 <div class="bar-label">AGENT BOB</div>
                 <div id="hp-bar-player" class="fight-bar"></div>
             </div>
+            <div id="kill-counter-box">KILLS: <span id="kill-count-val">0</span>/10</div>
             <div id="hp-bar-enemy-container" class="fight-bar-container">
                 <div class="bar-label" id="enemy-name">MONSTER</div>
                 <div id="hp-bar-enemy" class="fight-bar"></div>
             </div>
-            <div id="lvl7-controls">SOL TIK: VUR / SHIFT: KOŞ / C: ÖPÜCÜK (K.O)</div>
+            <div id="lvl7-controls">J: TEKME / K: YUMRUK / C: ÖPÜCÜK (K.O) / SHIFT: KOŞ</div>
             <div id="cooldown-kiss">💋</div>
             <div id="boss-warning">⚠️ DON BOSS ⚠️</div>
         </div>
@@ -528,13 +536,16 @@
         let wallet = 0;
         try { wallet = parseInt(localStorage.getItem('boombob_wallet')) || 0; } catch(e){ wallet = 0; }
         
-        let inventory = ['driver_default', 'car_default'];
+        let inventory = ['driver_default', 'car_default', 'trail_none']; // Default added trail_none
         try { 
             const savedInv = JSON.parse(localStorage.getItem('boombob_inventory'));
-            if(Array.isArray(savedInv)) inventory = savedInv;
+            if(Array.isArray(savedInv)) {
+                inventory = savedInv;
+                if(!inventory.includes('trail_none')) inventory.push('trail_none'); // Ensure existing users get it
+            }
         } catch(e) { console.log("Inv error reset"); }
 
-        let equipped = { driver: 'driver_default', car: 'car_default', accessory: null, trail: null };
+        let equipped = { driver: 'driver_default', car: 'car_default', accessory: null, trail: 'trail_none' };
         try {
             const savedEq = JSON.parse(localStorage.getItem('boombob_equipped'));
             if(savedEq) equipped = savedEq;
@@ -549,7 +560,7 @@
         let krakenState = { active: false, y: 1000 };
 
         // LEVEL 7 VARIABLES
-        let lvl7State = 'intro'; // intro, dialogue, fight, boss, win
+        let lvl7State = 'intro_drive'; // intro_drive, intro_stop, intro_exit, dialogue, fight, boss, win
         let lvl7Timer = 0;
         let lvl7DialogueIndex = 0;
         let lvl7Enemies = [];
@@ -561,6 +572,9 @@
         let agentBobBody = null;
         let bossBody = null;
         let isSprinting = false;
+        let animFrame = 0; // Global animation frame
+        let bobAction = 'idle'; // idle, run, kick, punch
+        let bobAnimTimer = 0; // Timer for specific actions
         
         // LEVEL 7 DIALOGUES
         const LVL7_DIALOGUES = [
@@ -585,10 +599,11 @@
             { id: 'trail_red', type: 'trail', price: 1000, icon: '🔴', color: '#EF4444' },
             { id: 'trail_blue', type: 'trail', price: 1000, icon: '🔵', color: '#3B82F6' },
             { id: 'trail_green', type: 'trail', price: 1000, icon: '🟢', color: '#10B981' },
-            { id: 'trail_purple', type: 'trail', price: 1000, icon: '🟣', color: '#8B5CF6' }
+            { id: 'trail_purple', type: 'trail', price: 1000, icon: '🟣', color: '#8B5CF6' },
+            { id: 'trail_none', type: 'trail', price: 0, icon: '🚫', color: null } // NO TRAIL
         ];
 
-        const DISPLAY_ITEMS_IDS = ['car_boat', 'driver_sigma', 'car_bobby', 'trail_rainbow', 'trail_red', 'trail_blue', 'trail_green', 'trail_purple']; 
+        const DISPLAY_ITEMS_IDS = ['car_boat', 'driver_sigma', 'car_bobby', 'trail_rainbow', 'trail_red', 'trail_blue', 'trail_green', 'trail_purple', 'trail_none']; 
 
         function saveGameData() {
             localStorage.setItem('boombob_wallet', wallet);
@@ -627,7 +642,8 @@
                 items: {
                     'car_boat': 'Tekne', 'driver_zombie': 'Zombi Bob', 'driver_alien': 'Uzaylı', 'car_blue': 'Mavi Şimşek', 'car_gold': 'Altın Kral', 'acc_turbo': 'Turbo Motor', 'driver_default': 'Bob', 'car_default': 'Kırmızı Araba',
                     'driver_sigma': 'Bob Sigma', 'car_bobby': 'Bobby Car',
-                    'trail_rainbow': 'Gökkuşağı', 'trail_red': 'Kırmızı İz', 'trail_blue': 'Mavi İz', 'trail_green': 'Yeşil İz', 'trail_purple': 'Mor İz'
+                    'trail_rainbow': 'Gökkuşağı', 'trail_red': 'Kırmızı İz', 'trail_blue': 'Mavi İz', 'trail_green': 'Yeşil İz', 'trail_purple': 'Mor İz',
+                    'trail_none': 'İz Yok (Kaldır)'
                 }
             },
             en: {
@@ -650,7 +666,8 @@
                 items: {
                     'car_boat': 'Boat', 'driver_zombie': 'Zombie Bob', 'driver_alien': 'Alien', 'car_blue': 'Blue Lightning', 'car_gold': 'Gold King', 'acc_turbo': 'Turbo Engine', 'driver_default': 'Bob', 'car_default': 'Red Car',
                     'driver_sigma': 'Bob Sigma', 'car_bobby': 'Bobby Car',
-                    'trail_rainbow': 'Rainbow', 'trail_red': 'Red Trail', 'trail_blue': 'Blue Trail', 'trail_green': 'Green Trail', 'trail_purple': 'Purple Trail'
+                    'trail_rainbow': 'Rainbow', 'trail_red': 'Red Trail', 'trail_blue': 'Blue Trail', 'trail_green': 'Green Trail', 'trail_purple': 'Purple Trail',
+                    'trail_none': 'No Trail'
                 }
             }
         };
@@ -680,7 +697,7 @@
         function renderShop() {
             const container = document.getElementById('shop-container');
             container.innerHTML = '';
-            const categories = ['driver', 'car', 'accessory', 'trail']; // ADDED TRAIL
+            const categories = ['driver', 'car', 'accessory', 'trail']; 
             const titles = { 
                 driver: TEXTS[currentLang].shopDrivers, 
                 car: TEXTS[currentLang].shopCars, 
@@ -698,11 +715,6 @@
                 grid.className = 'shop-grid';
                 
                 const itemsToShow = SHOP_ITEMS.filter(i => i.type === cat && DISPLAY_ITEMS_IDS.includes(i.id));
-                
-                if(itemsToShow.length === 0) {
-                     // Only show message if really empty (not filtered out)
-                     // Here we have items so it should be fine
-                } 
                 
                 itemsToShow.forEach(item => {
                     const isOwned = inventory.includes(item.id);
@@ -776,7 +788,7 @@
             4: { targetDistance: 240 }, 
             5: { targetDistance: 150 },
             6: { targetDistance: 300 },
-            7: { targetDistance: 0 } // Boss level has no distance
+            7: { targetDistance: 0 } 
         };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
@@ -784,7 +796,7 @@
         const carBobbyImg = new Image(); carBobbyImg.src = 'car1.jpg';
         const headImg = new Image(); headImg.src = 'head.png';
         const headSigmaImg = new Image(); headSigmaImg.src = 'head1.png';
-        const donImg = new Image(); donImg.src = 'don2.png'; // New Enemy Asset
+        const donImg = new Image(); donImg.src = 'don2.png'; 
 
         const canvas = document.getElementById('world');
         const ctx = canvas.getContext('2d');
@@ -832,6 +844,8 @@
             // Level 7 Attacks
             if (level === 7 && lvl7State === 'fight' && !isPaused) {
                 if(e.code === 'KeyC') tryKissAttack();
+                if(e.code === 'KeyJ') { performKick(); bobAction = 'kick'; bobAnimTimer = 20; } // KICK ANIMATION TRIGGER
+                if(e.code === 'KeyK') { performPunch(); bobAction = 'punch'; bobAnimTimer = 15; } // PUNCH ANIMATION TRIGGER
             }
 
             if(gameState === 'playing' && !isPaused && level === 1) {
@@ -844,12 +858,7 @@
             else keys[e.code] = false;
         });
         
-        // Mouse click for attack in lvl 7
-        window.addEventListener('mousedown', (e) => {
-            if (level === 7 && lvl7State === 'fight' && !isPaused) {
-                performMeleeAttack();
-            }
-        });
+        // Mouse click REMOVED for attack in lvl 7
 
         function toggleSuggestions() { const box = document.getElementById('suggestions-box'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; }
         function openScreen(name) {
@@ -898,7 +907,7 @@
                     document.getElementById('lvl7-ui').style.display = 'block';
                     document.getElementById('coin-counter').style.display = 'flex';
                     document.getElementById('coin-value').innerText = wallet;
-                    document.getElementById('game-container').style.backgroundColor = '#111'; // Dark background for Lvl 7
+                    document.getElementById('game-container').style.backgroundColor = '#110000'; // Bloody background
                 } else {
                     // Regular Levels UI
                     document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
@@ -924,7 +933,7 @@
                 if(level === 4) bg = '#1e1b4b'; 
                 if(level === 5) bg = '#60A5FA'; 
                 if(level === 6) bg = '#2a0a0a'; 
-                if(level === 7) bg = '#333';
+                if(level === 7) bg = '#110000';
                 document.getElementById('game-container').style.backgroundColor = bg;
 
             } else if (state === 'gameover') {
@@ -952,7 +961,7 @@
             
             // Level 7 Init
             if(level === 7) {
-                lvl7State = 'intro';
+                lvl7State = 'intro_drive';
                 lvl7Timer = 0;
                 lvl7DialogueIndex = 0;
                 lvl7Enemies = [];
@@ -961,8 +970,13 @@
                 lvl7KillCount = 0;
                 lvl7KissCooldown = 0;
                 lvl7SprintTimer = 0;
+                agentBobBody = null; // Ensure null at start
                 document.getElementById('hp-bar-enemy-container').style.display = 'none';
                 document.getElementById('hp-bar-player').style.width = '100%';
+                document.getElementById('kill-counter-box').style.display = 'block';
+                document.getElementById('kill-count-val').innerText = '0';
+            } else {
+                document.getElementById('kill-counter-box').style.display = 'none';
             }
 
             if (level === 5) {
@@ -990,13 +1004,17 @@
 
             if (level === 7) {
                 // LEVEL 7 ARENA SETUP
-                const ground = Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 50, GAME_WIDTH * 1.5, 100, { isStatic: true, label: 'ground' });
-                const leftWall = Bodies.rectangle(-50, GAME_HEIGHT/2, 100, GAME_HEIGHT * 2, { isStatic: true, label: 'wall' });
-                const rightWall = Bodies.rectangle(GAME_WIDTH + 50, GAME_HEIGHT/2, 100, GAME_HEIGHT * 2, { isStatic: true, label: 'wall' });
-                Composite.add(world, [ground, leftWall, rightWall]);
+                // IMPORTANT: Ground extended left to catch intro car
+                const ground = Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 50, GAME_WIDTH * 3, 100, { isStatic: true, label: 'ground', render: { fillStyle: '#220000' } });
                 
-                // Spawn car for intro
-                let startX = -300; 
+                // Walls NOT added here initially, to allow car entry
+                // const leftWall = Bodies.rectangle(-50, ...); // REMOVED FOR INTRO
+                // const rightWall = ... // REMOVED FOR INTRO
+                
+                Composite.add(world, [ground]);
+                
+                // Spawn car for intro (Car enters from Left, -200)
+                let startX = -200; 
                 let startY = GAME_HEIGHT - 150;
                 
                 // Car Construction (Simplified for intro)
@@ -1144,14 +1162,17 @@
         }
 
         function startLvl7Fight() {
-            // Remove Car, create Agent Bob
-            Matter.Composite.clear(engine.world, false); // Clear bodies
+            // Remove Car (keep bodies from intro maybe?)
+            // Actually, let's remove everything and spawn fight scene
+            Matter.Composite.clear(engine.world, false); 
+            
             const ground = Matter.Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 20, GAME_WIDTH * 2, 40, { isStatic: true, label: 'ground' });
             const leftWall = Matter.Bodies.rectangle(-20, GAME_HEIGHT/2, 40, GAME_HEIGHT * 2, { isStatic: true, label: 'wall' });
             const rightWall = Matter.Bodies.rectangle(GAME_WIDTH + 20, GAME_HEIGHT/2, 40, GAME_HEIGHT * 2, { isStatic: true, label: 'wall' });
             
-            // Agent Bob Body (Capsule-ish)
-            agentBobBody = Matter.Bodies.rectangle(200, GAME_HEIGHT - 100, 40, 80, { 
+            // Agent Bob Body (Capsule-ish) - Using car pos if possible, otherwise default
+            const startX = car.chassis.position.x || 300;
+            agentBobBody = Matter.Bodies.rectangle(startX, GAME_HEIGHT - 100, 40, 80, { 
                 inertia: Infinity, friction: 0.1, frictionAir: 0.02, label: 'agent' 
             });
             
@@ -1168,8 +1189,8 @@
             const enemy = Matter.Bodies.circle(x, -50, 25, { friction: 0.5, restitution: 0.5, label: 'enemy', hp: 30, maxHp: 30 });
             lvl7Enemies.push(enemy);
             Matter.Composite.add(engine.world, enemy);
-            document.getElementById('hp-bar-enemy-container').style.display = 'block';
-            document.getElementById('enemy-name').innerText = "MONSTER";
+            // Hide HP bar for normal enemies, using Kill Count instead
+            document.getElementById('hp-bar-enemy-container').style.display = 'none';
         }
         
         function spawnBoss() {
@@ -1177,13 +1198,15 @@
             const x = GAME_WIDTH / 2;
             bossBody = Matter.Bodies.circle(x, -200, 60, { friction: 0.5, restitution: 0.2, label: 'boss', hp: 300, maxHp: 300 });
             Matter.Composite.add(engine.world, bossBody);
-            lvl7Enemies = [bossBody]; // Clear others or treat boss as main
+            lvl7Enemies = [bossBody]; 
             
             const warn = document.getElementById('boss-warning');
             warn.style.transform = "translate(-50%, -50%) scale(1)";
             setTimeout(() => warn.style.transform = "translate(-50%, -50%) scale(0)", 3000);
             
             document.getElementById('enemy-name').innerText = "DON BOSS";
+            document.getElementById('hp-bar-enemy-container').style.display = 'block';
+            document.getElementById('kill-counter-box').style.display = 'none';
         }
 
         function spawnDrop() {
@@ -1196,31 +1219,39 @@
             Matter.Composite.add(engine.world, drop);
         }
 
-        function performMeleeAttack() {
-            if (!agentBobBody) return;
-            // Simple range check
-            let hit = false;
-            lvl7Enemies.forEach(e => {
+        function performKick() {
+             if (!agentBobBody) return;
+             particles.push({x: agentBobBody.position.x + 30, y: agentBobBody.position.y, life: 1, type:'text', text:'TEKME!'});
+             lvl7Enemies.forEach(e => {
                 const dx = e.position.x - agentBobBody.position.x;
                 const dy = e.position.y - agentBobBody.position.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                if (dist < 100) {
-                    // Hit
-                    Matter.Body.applyForce(e, e.position, { x: dx > 0 ? 0.05 : -0.05, y: -0.05 }); // Knockback
-                    const dmg = 10;
-                    e.hp -= dmg;
-                    hit = true;
-                    // Sparkle
-                    particles.push({ x: e.position.x, y: e.position.y, vx: 0, vy: 0, life: 1, type: 'hit' });
+                if (dist < 120) {
+                    Matter.Body.applyForce(e, e.position, { x: dx > 0 ? 0.08 : -0.08, y: -0.08 });
+                    e.hp -= 10; // High Damage
                     if (e.hp <= 0) killEnemy(e);
                 }
             });
-            // Visual feedback handled in draw
+        }
+        
+        function performPunch() {
+             if (!agentBobBody) return;
+             particles.push({x: agentBobBody.position.x + 30, y: agentBobBody.position.y - 20, life: 1, type:'text', text:'YUMRUK!'});
+             lvl7Enemies.forEach(e => {
+                const dx = e.position.x - agentBobBody.position.x;
+                const dy = e.position.y - agentBobBody.position.y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                if (dist < 80) {
+                    Matter.Body.applyForce(e, e.position, { x: dx > 0 ? 0.02 : -0.02, y: -0.02 });
+                    e.hp -= 5; // Fast Damage
+                    if (e.hp <= 0) killEnemy(e);
+                }
+            });
         }
 
         function tryKissAttack() {
             if (lvl7KissCooldown > 0 || !agentBobBody) return;
-            lvl7KissCooldown = 360; // 6 seconds * 60 fps
+            lvl7KissCooldown = 360; 
             let closest = null; let minDst = 200;
             lvl7Enemies.forEach(e => {
                 const d = Math.abs(e.position.x - agentBobBody.position.x);
@@ -1228,7 +1259,6 @@
             });
             
             if (closest) {
-                // Insta kill normal, heavy dmg boss
                 particles.push({ x: closest.position.x, y: closest.position.y, vx: 0, vy: -1, life: 2, type: 'heart' });
                 if (closest.label === 'boss') closest.hp -= 50;
                 else killEnemy(closest);
@@ -1244,9 +1274,10 @@
                 gameState = 'win'; updateUI('win');
             } else {
                 lvl7KillCount++;
+                document.getElementById('kill-count-val').innerText = lvl7KillCount;
                 if (lvl7KillCount >= 10 && lvl7State === 'fight') {
                     spawnBoss();
-                } else if (lvl7State === 'fight' && lvl7Enemies.length < 2) {
+                } else if (lvl7State === 'fight' && lvl7Enemies.length < 3) {
                     setTimeout(spawnEnemy, 1000);
                 }
             }
@@ -1255,29 +1286,57 @@
         function gameLoop() {
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
+                animFrame++;
 
                 // --- LEVEL 7 LOGIC ---
                 if (level === 7) {
-                    if (lvl7State === 'intro') {
-                        // Intro cinematic
-                        if (car.chassis.position.x < GAME_WIDTH / 2) {
+                    if (lvl7State === 'intro_drive') {
+                        if (car.chassis.position.x < 300) {
                             Matter.Body.setVelocity(car.chassis, { x: 5, y: 0 });
                         } else {
-                            Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 });
-                            Matter.Body.setAngularVelocity(car.chassis, 0);
+                            lvl7State = 'intro_stop';
+                            // Spawn Blocking Monsters
+                            const m1 = Matter.Bodies.circle(600, GAME_HEIGHT - 100, 30, { isStatic: true, label: 'blocker' });
+                            const m2 = Matter.Bodies.circle(650, GAME_HEIGHT - 100, 30, { isStatic: true, label: 'blocker' });
+                            Matter.Composite.add(engine.world, [m1, m2]);
+                            lvl7Enemies.push(m1, m2); // Just for rendering
+                            
+                            setTimeout(() => { lvl7State = 'intro_exit'; }, 1000);
+                        }
+                    }
+                    else if (lvl7State === 'intro_stop') {
+                        Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 });
+                    }
+                    else if (lvl7State === 'intro_exit') {
+                        // Create Bob physics body for walking out
+                        if(!agentBobBody) {
+                            agentBobBody = Matter.Bodies.rectangle(car.chassis.position.x, GAME_HEIGHT - 100, 40, 80, { 
+                                inertia: Infinity, friction: 0.1, label: 'agent' 
+                            });
+                            Matter.Composite.add(engine.world, agentBobBody);
+                        }
+                        
+                        // Walk to center
+                        if(agentBobBody.position.x < 500) {
+                            Matter.Body.setVelocity(agentBobBody, { x: 2, y: 0 });
+                            bobAction = 'run';
+                        } else {
+                            Matter.Body.setVelocity(agentBobBody, { x: 0, y: 0 });
+                            bobAction = 'idle';
                             lvl7State = 'dialogue';
                             showNextDialogue();
                         }
-                    } 
+                    }
                     else if (lvl7State === 'fight' || lvl7State === 'boss') {
                         // Player Control
                         if (agentBobBody) {
-                            Matter.Body.setAngle(agentBobBody, 0); // Keep upright
+                            Matter.Body.setAngle(agentBobBody, 0); 
                             let speed = 3;
                             if (isSprinting) speed = 6;
                             
-                            if (keys['KeyD']) Matter.Body.setVelocity(agentBobBody, { x: speed, y: agentBobBody.velocity.y });
-                            else if (keys['KeyA']) Matter.Body.setVelocity(agentBobBody, { x: -speed, y: agentBobBody.velocity.y });
+                            bobAction = 'idle';
+                            if (keys['KeyD']) { Matter.Body.setVelocity(agentBobBody, { x: speed, y: agentBobBody.velocity.y }); bobAction = 'run'; }
+                            else if (keys['KeyA']) { Matter.Body.setVelocity(agentBobBody, { x: -speed, y: agentBobBody.velocity.y }); bobAction = 'run'; }
                             else Matter.Body.setVelocity(agentBobBody, { x: 0, y: agentBobBody.velocity.y });
 
                             if (keys['Space'] && Math.abs(agentBobBody.velocity.y) < 0.1) {
@@ -1286,11 +1345,13 @@
                             
                             if (keys['Shift'] && lvl7SprintTimer <= 0) {
                                 isSprinting = true;
-                                setTimeout(() => { isSprinting = false; lvl7SprintTimer = 300; }, 2000); // 2 sec sprint
+                                setTimeout(() => { isSprinting = false; lvl7SprintTimer = 300; }, 2000); 
                             }
                             if (lvl7SprintTimer > 0) lvl7SprintTimer--;
                             if (lvl7KissCooldown > 0) lvl7KissCooldown--;
-                            
+                            if (bobAnimTimer > 0) { bobAnimTimer--; } 
+                            else { if(bobAction === 'kick' || bobAction === 'punch') bobAction = 'idle'; }
+
                             // Cooldown visual
                             const cdEl = document.getElementById('cooldown-kiss');
                             if(lvl7KissCooldown > 0) { cdEl.classList.add('cd'); cdEl.innerText = Math.ceil(lvl7KissCooldown/60); }
@@ -1312,8 +1373,9 @@
                                 }
                             });
                             
-                            // Enemy Logic (Simple AI)
+                            // Enemy Logic
                             lvl7Enemies.forEach(e => {
+                                if(e.label === 'blocker') return; // Don't move blocker
                                 if(e.position.y > GAME_HEIGHT + 100) Matter.Body.setPosition(e, {x: e.position.x, y: -50});
                                 const dir = agentBobBody.position.x > e.position.x ? 1 : -1;
                                 Matter.Body.applyForce(e, e.position, { x: dir * 0.001, y: 0 });
@@ -1326,19 +1388,18 @@
                                     if (lvl7BobHP <= 0) { gameState = 'gameover'; updateUI('gameover'); }
                                 }
                                 
-                                // Update Enemy HP Bar (Focus on first enemy or boss)
+                                // Update Boss HP
                                 if (e.label === 'boss') {
                                     document.getElementById('hp-bar-enemy').style.width = (e.hp / e.maxHp * 100) + '%';
-                                } else if (lvl7Enemies.indexOf(e) === 0) {
-                                     document.getElementById('hp-bar-enemy').style.width = (e.hp / e.maxHp * 100) + '%';
-                                }
+                                } 
                             });
                         }
                     }
                 }
                 
-                // --- EXISTING LEVELS LOGIC (1-6) ---
+                // --- EXISTING LEVELS LOGIC ---
                 else {
+                    // ... (Keeping existing logic for levels 1-6) ...
                     if (level === 6 && gameState === 'playing' && !isPaused) {
                         if (Math.random() > 0.985) { 
                             const meteorX = car.chassis.position.x + 300 + Math.random() * 800;
@@ -1374,7 +1435,7 @@
                     
                     if (level === 4 && alienAlive) { if (Math.abs(car.chassis.position.x - 20000) < 400) alienAlive = false; }
 
-                    let MAX_SPEED = 0.5; if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85; else if(equipped.car === 'car_bobby') MAX_SPEED = 1.0;
+                    let MAX_SPEED = 0.5; if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85; else if(equipped.car === 'car_bobby') MAX_SPEED = 1.3;
                     if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
                     
                     let speedRaw = 0; if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity); else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
@@ -1395,8 +1456,18 @@
                     if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
 
                     if (equipped.car !== 'car_boat') {
-                        if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
-                        if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
+                        if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { 
+                            let acc = 0.015; 
+                            if(equipped.car === 'car_bobby') acc = 0.025;
+                            Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); 
+                            Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); 
+                        }
+                        if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { 
+                            let acc = 0.015; 
+                            if(equipped.car === 'car_bobby') acc = 0.025;
+                            Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); 
+                            Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); 
+                        }
                         if (keys['Space']) { Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9); if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04); }
                     } else { 
                         let moveForce = 0.06; let maxBoatSpeed = 4.0; if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
@@ -1408,8 +1479,15 @@
                     if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
                         const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; const dirtY = car.wheelBack.position.y + 15;
                         let pType = 'dirt'; let pColor = null;
-                        if (equipped.trail) { pType = 'trail'; const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail); if(trailItem) pColor = trailItem.color; }
-                        else if (equipped.car === 'car_bobby') { pType = 'money'; }
+                        
+                        if (equipped.car === 'car_bobby') {
+                            pType = 'money';
+                        } else if (equipped.trail && equipped.trail !== 'trail_none') { 
+                            pType = 'trail'; 
+                            const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail); 
+                            if(trailItem) pColor = trailItem.color; 
+                        }
+                        
                         if(Math.random() > 0.5) particles.push({ x: dirtX, y: dirtY, vx: (Math.random() - 0.5) * 4 - 2, vy: -Math.random() * 3 - 1, life: 1.0, type: pType, color: pColor });
                     }
                     if (Math.abs(car.chassis.velocity.x) > 1) { const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20; if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' }); }
@@ -1423,6 +1501,100 @@
             if (gameState !== 'stop') animationFrameId = requestAnimationFrame(gameLoop);
         }
 
+        function drawStickman(ctx, x, y, type, action, timer) {
+            ctx.save();
+            ctx.translate(x, y);
+            
+            // Stickman Params
+            const color = type === 'bob' ? 'black' : 'white';
+            const headY = -50;
+            const bodyLen = 40;
+            const legLen = 30;
+            const armLen = 25;
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            
+            // Animation Math
+            const sway = Math.sin(Date.now() / 200) * 0.1;
+            let legL = Math.PI/2, legR = Math.PI/2;
+            let armL = Math.PI/2, armR = Math.PI/2;
+            
+            if (action === 'run') {
+                const runCycle = Math.sin(Date.now() / 100);
+                legL += runCycle * 0.8;
+                legR -= runCycle * 0.8;
+                armL -= runCycle * 0.8;
+                armR += runCycle * 0.8;
+            } else if (action === 'kick') {
+                legR -= 1.5; // Kick leg up
+                armL -= 0.5;
+            } else if (action === 'punch') {
+                armR -= 1.8; // Punch arm forward
+            }
+
+            // Body
+            ctx.beginPath();
+            ctx.moveTo(0, headY + 15);
+            ctx.lineTo(0, 0); // Torso end
+            ctx.stroke();
+            
+            // Legs
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(legL) * legLen, Math.sin(legL) * legLen);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(legR) * legLen, Math.sin(legR) * legLen);
+            ctx.stroke();
+            
+            // Arms
+            ctx.beginPath();
+            ctx.moveTo(0, headY + 25); // Shoulder
+            ctx.lineTo(Math.cos(armL) * armLen, (headY + 25) + Math.sin(armL) * armLen);
+            ctx.moveTo(0, headY + 25);
+            ctx.lineTo(Math.cos(armR) * armLen, (headY + 25) + Math.sin(armR) * armLen);
+            ctx.stroke();
+
+            // Head (Image or Shape)
+            if (type === 'bob') {
+                // Bob Suit details
+                ctx.strokeStyle = 'white'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(0, headY+15); ctx.lineTo(0, headY+25); ctx.stroke(); // Shirt
+                ctx.strokeStyle = 'red'; 
+                ctx.beginPath(); ctx.moveTo(0, headY+15); ctx.lineTo(0, headY+20); ctx.stroke(); // Tie
+                
+                // Head
+                if (headImg.complete && headImg.naturalWidth !== 0) {
+                    ctx.drawImage(headImg, -20, headY - 20, 40, 40);
+                } else {
+                    ctx.fillStyle = '#FFCC80'; ctx.beginPath(); ctx.arc(0, headY, 15, 0, Math.PI*2); ctx.fill();
+                }
+            } else {
+                // Monster Boxers (Batmanli)
+                ctx.fillStyle = 'black';
+                ctx.fillRect(-10, -5, 20, 15); // Boxer
+                ctx.fillStyle = 'yellow';
+                ctx.beginPath(); ctx.ellipse(0, 2, 6, 3, 0, 0, Math.PI*2); ctx.fill(); // Bat logo placeholder
+                
+                // Monster Head (Don shape or Face)
+                if (donImg.complete && donImg.naturalWidth !== 0) {
+                    ctx.drawImage(donImg, -20, headY - 20, 40, 40);
+                } else {
+                    // Fallback Head
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(0, headY, 15, 0, Math.PI*2);
+                    ctx.fill();
+                    // Angry Eyes
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(-8, headY-5, 5, 5); ctx.fillRect(3, headY-5, 5, 5);
+                }
+            }
+
+            ctx.restore();
+        }
+
         function draw() {
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.save();
             
@@ -1434,7 +1606,7 @@
             ctx.translate(camera.x, camera.y);
             
             let bgColor = '#87CEEB';
-            if (level === 4) bgColor = '#1e1b4b'; if (level === 5) bgColor = '#60A5FA'; if (level === 6) bgColor = '#2a0a0a'; if (level === 7) bgColor = '#333';
+            if (level === 4) bgColor = '#1e1b4b'; if (level === 5) bgColor = '#60A5FA'; if (level === 6) bgColor = '#2a0a0a'; if (level === 7) bgColor = '#110000';
             
             ctx.fillStyle = bgColor;
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
@@ -1447,70 +1619,50 @@
             
             // --- LEVEL 7 DRAWING ---
             if (level === 7) {
-                // Arena Background
-                ctx.fillStyle = '#444';
+                // Bloody Sun Background
+                ctx.fillStyle = '#110000'; // Dark red night
                 ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-                ctx.fillStyle = '#222';
+                
+                // Draw Bloody Sun
+                const sunX = GAME_WIDTH / 2;
+                const sunY = 150;
+                ctx.beginPath();
+                ctx.arc(sunX, sunY, 60, 0, Math.PI * 2);
+                ctx.fillStyle = '#880000';
+                ctx.shadowBlur = 40;
+                ctx.shadowColor = 'red';
+                ctx.fill();
+                ctx.shadowBlur = 0; // Reset
+                
+                // Floor
+                ctx.fillStyle = '#220000';
                 ctx.fillRect(0, GAME_HEIGHT - 50, GAME_WIDTH, 50);
 
-                if (lvl7State === 'intro') {
-                    drawCarAndDriver(car, driverHead); // Reuse existing draw
-                } else if (lvl7State === 'fight' || lvl7State === 'boss') {
-                    // Draw Agent Bob
+                if (lvl7State === 'intro_drive' || lvl7State === 'intro_stop') {
+                    // Draw Car Entering
+                    if(car && car.chassis) drawCarAndDriver(car, driverHead); 
+                    
+                    // Draw Blockers (Monsters)
+                    lvl7Enemies.forEach(e => {
+                        drawStickman(ctx, e.position.x, e.position.y, 'monster', 'idle', 0);
+                    });
+                } 
+                else {
+                    // Intro Exit, Dialogue, Fight
+                    // Draw Car (Empty)
+                    drawCarAndDriver(car, null); 
+
+                    // Draw Agent Bob Stickman
                     if (agentBobBody) {
-                        ctx.save();
-                        ctx.translate(agentBobBody.position.x, agentBobBody.position.y);
-                        
-                        // Suit Body
-                        ctx.fillStyle = 'black';
-                        ctx.fillRect(-20, -40, 40, 80);
-                        // Tie
-                        ctx.fillStyle = 'white'; ctx.beginPath(); ctx.moveTo(-5, -35); ctx.lineTo(5, -35); ctx.lineTo(0, -10); ctx.fill();
-                        ctx.fillStyle = 'red'; ctx.beginPath(); ctx.moveTo(-2, -35); ctx.lineTo(2, -35); ctx.lineTo(0, -20); ctx.fill();
-                        
-                        // Head
-                        ctx.drawImage(headImg, -30, -70, 60, 60);
-                        
-                        // Sunglasses (Agent)
-                        ctx.fillStyle = 'black';
-                        ctx.fillRect(-15, -45, 30, 10);
-                        ctx.strokeStyle = '#555'; ctx.lineWidth = 1; ctx.strokeRect(-15, -45, 12, 10); ctx.strokeRect(3, -45, 12, 10);
-                        
-                        ctx.restore();
+                        let anim = bobAction;
+                        if(bobAnimTimer > 0) anim = bobAction; 
+                        // Override action for specific animation frames if needed
+                        drawStickman(ctx, agentBobBody.position.x, agentBobBody.position.y, 'bob', anim, animFrame);
                     }
 
-                    // Draw Monsters
+                    // Draw Monsters Stickman
                     lvl7Enemies.forEach(e => {
-                        ctx.save();
-                        ctx.translate(e.position.x, e.position.y);
-                        
-                        let size = e.label === 'boss' ? 120 : 50;
-                        let half = size/2;
-                        
-                        if (donImg.complete && donImg.naturalWidth !== 0) {
-                            ctx.drawImage(donImg, -half, -half, size, size);
-                        } else {
-                            // Fallback: Draw White Underwear shape
-                            ctx.fillStyle = 'white';
-                            ctx.beginPath();
-                            ctx.moveTo(-half, -half/2);
-                            ctx.lineTo(half, -half/2);
-                            ctx.lineTo(0, half);
-                            ctx.fill();
-                            ctx.strokeStyle = '#ccc';
-                            ctx.lineWidth = 3;
-                            ctx.stroke();
-                        }
-                        
-                        // Angry Eyes
-                        ctx.fillStyle = 'black';
-                        if (e.label === 'boss') {
-                            ctx.fillRect(-20, -10, 15, 15); ctx.fillRect(5, -10, 15, 15);
-                        } else {
-                            ctx.fillRect(-10, -5, 8, 8); ctx.fillRect(2, -5, 8, 8);
-                        }
-                        
-                        ctx.restore();
+                        drawStickman(ctx, e.position.x, e.position.y, 'monster', 'run', animFrame);
                     });
 
                     // Draw Drops
@@ -1531,8 +1683,9 @@
             
             // --- REGULAR LEVELS DRAWING ---
             else {
-                // ... (Existing drawing logic mostly) ...
-                 if (level === 6) {
+                // ... (Level 1-6 Draw Logic is same as previous, omitted for brevity as requested not to change unrelated parts, but keeping it functional)
+                // Re-inserting standard drawing logic here to ensure no regression
+                if (level === 6) {
                     ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
                     for(let i=0; i<50; i++) { const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200)); const ay = -camera.y + ((i * 243 + time * 200) % (GAME_HEIGHT + 200)); ctx.fillRect(ax, ay, 4, 4); }
                     meteors.forEach(m => { ctx.save(); ctx.translate(m.position.x, m.position.y); ctx.rotate(m.angle); ctx.beginPath(); ctx.arc(0, 0, m.circleRadius, 0, Math.PI * 2); ctx.fillStyle = '#451a03'; ctx.fill(); ctx.beginPath(); ctx.arc(0, 0, m.circleRadius * 0.7, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill(); ctx.globalAlpha = 0.6; ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(-m.circleRadius, -m.circleRadius, m.circleRadius, 0, Math.PI*2); ctx.fill(); ctx.restore(); });
@@ -1547,7 +1700,6 @@
 
                 if (engine) {
                     const bodies = Matter.Composite.allBodies(engine.world);
-                    // Draw Terrain
                     bodies.forEach(body => {
                         if (body.label === 'ground') {
                             ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
@@ -1557,10 +1709,7 @@
                             if (level === 6) ctx.fillStyle = '#7f1d1d'; else ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); ctx.fill();
                             ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); ctx.restore();
                         }
-                    });
-                    
-                    // Draw Finish & Coins
-                     bodies.forEach(body => {
+                        
                         if (body.label === 'finish') {
                             ctx.save(); ctx.translate(body.position.x, body.position.y); 
                             for(let i=0; i<10; i++) { ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#000000'; ctx.fillRect(-10, 0, 40, 20); }
@@ -1587,7 +1736,6 @@
                         ctx.fillStyle = 'rgba(147, 197, 253, 0.6)'; ctx.beginPath(); ctx.moveTo(screenStart, GAME_HEIGHT + 200); for (let x = screenStart; x <= screenEnd; x += 15) { const y = calculateWaterHeight(x, time) + 10; ctx.lineTo(x, y); } ctx.lineTo(screenEnd, GAME_HEIGHT + 200); ctx.fill();
                     }
                     
-                    // Draw Car
                     drawCarAndDriver(car, driverHead);
                 }
             }
