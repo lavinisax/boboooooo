@@ -300,6 +300,26 @@
             color: rgba(255,255,255,0.3); font-weight: bold; pointer-events: none;
         }
 
+        /* Level 7 UI Elements */
+        #fight-ui {
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            display: none; flex-direction: column; align-items: center; z-index: 45;
+        }
+        #health-bar-container {
+            width: 300px; height: 20px; background: #374151; border: 2px solid white; border-radius: 10px; overflow: hidden;
+        }
+        #health-bar {
+            width: 100%; height: 100%; background: #EF4444; transition: width 0.2s;
+        }
+        #fight-score {
+            font-family: 'Impact', sans-serif; font-size: 2rem; color: #FACC15; text-shadow: 2px 2px 0 black; margin-top: 5px;
+        }
+        #fight-controls {
+            position: absolute; bottom: 100px; width: 100%; text-align: center;
+            font-family: monospace; color: white; font-weight: bold; font-size: 1.2rem;
+            text-shadow: 1px 1px 2px black; display: none; z-index: 45; pointer-events: none;
+        }
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 </head>
@@ -316,6 +336,12 @@
         <div id="dumb-message" style="font-size:3rem; color:red; border: 4px solid red; background:#000; padding:20px; border-radius:20px; font-weight:bold; color:white;">ARE U DUMB? 🌊</div>
         <div id="level3-message">NOW IT'S GETTING HARDER... 😈</div>
         <div id="tutorial-text">D - İLERİ<br>A - GERİ<br>SPACE - FREN</div>
+
+        <div id="fight-ui">
+            <div id="health-bar-container"><div id="health-bar"></div></div>
+            <div id="fight-score">KILLS: 0/20</div>
+        </div>
+        <div id="fight-controls">K - PUNCH | J - KICK | SPACE - JUMP</div>
 
         <button id="btn-ingame-settings" onclick="toggleInGameSettings()">⚙️</button>
         
@@ -397,6 +423,11 @@
                 <button class="level-btn" onclick="selectLevel(6)">
                     <span id="lvl-btn-6" style="color:#EF4444;">LEVEL 6: MAGMA 🌋</span>
                     <span class="level-info">300m</span>
+                </button>
+                <!-- LEVEL 7 BUTTON -->
+                <button class="level-btn" onclick="selectLevel(7)">
+                    <span id="lvl-btn-7" style="color:#DC2626; border: 1px solid red;">LEVEL 7: STREET FIGHTER 🥊</span>
+                    <span class="level-info">FIGHT!</span>
                 </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
@@ -486,6 +517,18 @@
         let alienAlive = true;
         let krakenState = { active: false, y: 1000 };
 
+        // FIGHT MODE VARIABLES
+        let fightState = {
+            health: 100,
+            kills: 0,
+            weapon: 'fist',
+            isAttacking: false,
+            attackTimer: 0,
+            direction: 1 // 1 right, -1 left
+        };
+        let monsters = [];
+        let groundWeapons = [];
+
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
             { id: 'car_bobby', type: 'car', price: 5000, icon: '🚘' },
@@ -527,6 +570,7 @@
                 level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
                 level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: OKYANUS",
                 level6Name: "LEVEL 6: YANARDAĞ ZİRVESİ",
+                level7Name: "LEVEL 7: SOKAK DÖVÜŞÇÜSÜ",
                 tutorial: "D-İLERİ  A-GERİ  SPACE-FREN  S-BURUN AŞAĞI", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
                 winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
@@ -550,6 +594,7 @@
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
                 level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: OCEAN",
                 level6Name: "LEVEL 6: MAGMA PEAK",
+                level7Name: "LEVEL 7: STREET FIGHTER",
                 tutorial: "D-GAS  A-BACK  SPACE-BRAKE  S-NOSE DOWN", level3Msg: "NOW IT'S GETTING HARDER... 😈",
                 winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
@@ -582,6 +627,7 @@
                 'lvl-btn-1': t.level1Name + " - 140m", 'lvl-btn-2': t.level2Name + " - 100m", 'lvl-btn-3': t.level3Name + " - 200m",
                 'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 150m",
                 'lvl-btn-6': t.level6Name + " - 300m", 
+                'lvl-btn-7': t.level7Name + " - 20 kills", 
                 'lbl-lang': t.langLabel, 'btn-toggle-sugg': t.suggTitle, 'btn-submit': t.submit,
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
@@ -595,7 +641,7 @@
         function renderShop() {
             const container = document.getElementById('shop-container');
             container.innerHTML = '';
-            const categories = ['driver', 'car', 'accessory', 'trail']; // ADDED TRAIL
+            const categories = ['driver', 'car', 'accessory', 'trail']; 
             const titles = { 
                 driver: TEXTS[currentLang].shopDrivers, 
                 car: TEXTS[currentLang].shopCars, 
@@ -613,11 +659,6 @@
                 grid.className = 'shop-grid';
                 
                 const itemsToShow = SHOP_ITEMS.filter(i => i.type === cat && DISPLAY_ITEMS_IDS.includes(i.id));
-                
-                if(itemsToShow.length === 0) {
-                     // Only show message if really empty (not filtered out)
-                     // Here we have items so it should be fine
-                } 
                 
                 itemsToShow.forEach(item => {
                     const isOwned = inventory.includes(item.id);
@@ -676,7 +717,7 @@
 
         function equipItem(item) { equipped[item.type] = item.id; saveGameData(); renderInventory(); }
 
-        let engine, car, driverHead;
+        let engine, car, driverHead, playerBody;
         let coins = [], particles = [], fish = [], seagulls = [], meteors = []; 
         let gameState = 'start', score = 0, level = 1;
         let animationFrameId, cloudOffset = 0;
@@ -690,7 +731,8 @@
             3: { targetDistance: 200 }, 
             4: { targetDistance: 240 }, 
             5: { targetDistance: 150 },
-            6: { targetDistance: 300 } 
+            6: { targetDistance: 300 },
+            7: { targetDistance: 20 } // Kills for level 7
         };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
@@ -773,32 +815,41 @@
             document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active');
             document.getElementById('level3-message').classList.remove('active'); document.getElementById('broke-message').classList.remove('active');
             document.getElementById('dumb-message').classList.remove('active');
+            document.getElementById('fight-ui').style.display = 'none';
+            document.getElementById('fight-controls').style.display = 'none';
 
             if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
             else if (state === 'playing') {
-                document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
-                document.getElementById('coin-counter').style.display = 'flex'; document.getElementById('speedometer').style.display = 'flex';
-                
-                if (equipped.car === 'car_boat') {
-                    document.getElementById('boost-label').style.display = 'block';
-                    document.getElementById('boost-bar-container').style.display = 'block';
-                    document.getElementById('down-pedal').style.display = 'flex';
+                if (level === 7) {
+                    document.getElementById('fight-ui').style.display = 'flex';
+                    document.getElementById('fight-controls').style.display = 'block';
+                    document.getElementById('btn-ingame-settings').style.display = 'block';
                 } else {
-                    document.getElementById('boost-label').style.display = 'none';
-                    document.getElementById('boost-bar-container').style.display = 'none';
-                    document.getElementById('down-pedal').style.display = 'none';
-                }
+                    document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
+                    document.getElementById('coin-counter').style.display = 'flex'; document.getElementById('speedometer').style.display = 'flex';
+                    
+                    if (equipped.car === 'car_boat') {
+                        document.getElementById('boost-label').style.display = 'block';
+                        document.getElementById('boost-bar-container').style.display = 'block';
+                        document.getElementById('down-pedal').style.display = 'flex';
+                    } else {
+                        document.getElementById('boost-label').style.display = 'none';
+                        document.getElementById('boost-bar-container').style.display = 'none';
+                        document.getElementById('down-pedal').style.display = 'none';
+                    }
 
-                document.getElementById('btn-ingame-settings').style.display = 'block'; document.getElementById('pedals-container').style.display = 'flex';
-                document.getElementById('coin-value').innerText = wallet;
-                document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
-                if (level === 1 && (!tutorialState.A || !tutorialState.D || !tutorialState.Space)) document.getElementById('tutorial-text').style.display = 'block';
-                if (level === 3) { const l3m = document.getElementById('level3-message'); l3m.classList.add('active'); setTimeout(() => l3m.classList.remove('active'), 4000); }
+                    document.getElementById('btn-ingame-settings').style.display = 'block'; document.getElementById('pedals-container').style.display = 'flex';
+                    document.getElementById('coin-value').innerText = wallet;
+                    document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
+                    if (level === 1 && (!tutorialState.A || !tutorialState.D || !tutorialState.Space)) document.getElementById('tutorial-text').style.display = 'block';
+                    if (level === 3) { const l3m = document.getElementById('level3-message'); l3m.classList.add('active'); setTimeout(() => l3m.classList.remove('active'), 4000); }
+                }
                 
                 let bg = '#93C5FD'; 
                 if(level === 4) bg = '#1e1b4b'; 
                 if(level === 5) bg = '#60A5FA'; 
                 if(level === 6) bg = '#2a0a0a'; 
+                if(level === 7) bg = '#374151'; // Street Fighter BG
                 document.getElementById('game-container').style.backgroundColor = bg;
 
             } else if (state === 'gameover') {
@@ -812,7 +863,7 @@
         function startGame() { 
             if(gameState === 'playing') return;
             
-            if (level !== 5 && equipped.car === 'car_boat') {
+            if (level !== 5 && equipped.car === 'car_boat' && level !== 7) {
                 showNotification(TEXTS[currentLang].boatBan);
                 equipped.car = 'car_default';
                 saveGameData(); 
@@ -823,6 +874,9 @@
             tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
             boostFuel = 100; spawnInvincibility = false; alienAlive = true; 
             krakenState = { active: false, y: 1000, msgAlpha: 0 };
+            
+            // Level 7 Reset
+            fightState.health = 100; fightState.kills = 0; fightState.weapon = 'fist'; monsters = []; groundWeapons = [];
             
             if (level === 5) {
                 spawnInvincibility = true; 
@@ -844,8 +898,26 @@
         function setupPhysicsWorld() {
             const Engine = Matter.Engine, World = Matter.World, Bodies = Matter.Bodies, Composite = Matter.Composite, Constraint = Matter.Constraint, Events = Matter.Events;
             if (engine) { Matter.World.clear(engine.world); Matter.Engine.clear(engine); } else { engine = Engine.create(); }
-            engine.positionIterations = 8; engine.velocityIterations = 8; engine.gravity.y = (level === 4) ? 0.5 : 1.5;
+            engine.positionIterations = 8; engine.velocityIterations = 8; 
+            engine.gravity.y = (level === 4) ? 0.5 : 1.5;
             const world = engine.world;
+
+            if (level === 7) {
+                // LEVEL 7 PHYSICS SETUP
+                const ground = Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 50, GAME_WIDTH * 3, 100, { isStatic: true, label: 'ground' });
+                const leftWall = Bodies.rectangle(-GAME_WIDTH, GAME_HEIGHT/2, 100, GAME_HEIGHT*3, { isStatic: true });
+                const rightWall = Bodies.rectangle(GAME_WIDTH*2, GAME_HEIGHT/2, 100, GAME_HEIGHT*3, { isStatic: true });
+                
+                playerBody = Bodies.rectangle(200, GAME_HEIGHT - 200, 40, 100, { 
+                    inertia: Infinity, // Prevent rotation
+                    friction: 0.01,
+                    label: 'player'
+                });
+                
+                Composite.add(world, [ground, leftWall, rightWall, playerBody]);
+                car = null; 
+                return;
+            }
 
             const CAT_CAR = 0x0002, CAT_GROUND = 0x0004, CAT_DRIVER = 0x0008, CAT_COIN = 0x0010, CAT_FINISH = 0x0020;
             const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
@@ -984,6 +1056,92 @@
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
 
+                // --- LEVEL 7 LOGIC ---
+                if (level === 7) {
+                    // Player Movement
+                    let velocityX = 0;
+                    if (keys['KeyD']) { velocityX = 5; fightState.direction = 1; }
+                    else if (keys['KeyA']) { velocityX = -5; fightState.direction = -1; }
+                    
+                    Matter.Body.setVelocity(playerBody, { x: velocityX, y: playerBody.velocity.y });
+                    
+                    if (keys['Space'] && Math.abs(playerBody.velocity.y) < 0.1) {
+                        Matter.Body.setVelocity(playerBody, { x: playerBody.velocity.x, y: -15 });
+                    }
+
+                    // Attacks
+                    if ((keys['KeyK'] || keys['KeyJ']) && !fightState.isAttacking) {
+                        fightState.isAttacking = true;
+                        setTimeout(() => fightState.isAttacking = false, 300);
+                        
+                        // Hitbox check
+                        monsters.forEach((m, index) => {
+                            const dist = Math.abs(m.position.x - playerBody.position.x);
+                            const dir = Math.sign(m.position.x - playerBody.position.x);
+                            if (dist < 80 && dir === fightState.direction && Math.abs(m.position.y - playerBody.position.y) < 50) {
+                                // HIT!
+                                m.hp -= (fightState.weapon !== 'fist' ? 35 : 15);
+                                Matter.Body.applyForce(m, m.position, { x: fightState.direction * 0.05, y: -0.05 });
+                                if (m.hp <= 0) {
+                                    Matter.Composite.remove(engine.world, m);
+                                    monsters.splice(index, 1);
+                                    fightState.kills++;
+                                    if(fightState.kills >= 20) { gameState = 'win'; updateUI('win'); }
+                                }
+                            }
+                        });
+                    }
+
+                    // Weapon Spawning
+                    if (Math.random() > 0.99) {
+                        const type = ['sword', 'axe', 'bat'][Math.floor(Math.random()*3)];
+                        const w = Matter.Bodies.rectangle(playerBody.position.x + (Math.random()-0.5)*800, -100, 30, 30, { label: 'weapon', wType: type });
+                        groundWeapons.push(w);
+                        Matter.Composite.add(engine.world, w);
+                    }
+
+                    // Monster Spawning
+                    if (monsters.length < 3 && Math.random() > 0.98) {
+                        const side = Math.random() > 0.5 ? 1 : -1;
+                        const mx = playerBody.position.x + side * (400 + Math.random() * 200);
+                        const m = Matter.Bodies.rectangle(mx, GAME_HEIGHT - 200, 40, 90, { friction: 0.01, label: 'monster' });
+                        m.hp = 50;
+                        monsters.push(m);
+                        Matter.Composite.add(engine.world, m);
+                    }
+
+                    // Weapon Pickup
+                    groundWeapons.forEach((w, i) => {
+                        if (Matter.Collision.collides(playerBody, w)) {
+                            fightState.weapon = w.wType;
+                            Matter.Composite.remove(engine.world, w);
+                            groundWeapons.splice(i, 1);
+                            showNotification("WEAPON EQUIPPED: " + w.wType.toUpperCase());
+                        }
+                    });
+
+                    // Monster AI & Collision
+                    monsters.forEach(m => {
+                        const dx = playerBody.position.x - m.position.x;
+                        if (Math.abs(dx) > 40) {
+                            Matter.Body.setVelocity(m, { x: Math.sign(dx) * 2, y: m.velocity.y });
+                        }
+                        
+                        if (Math.abs(dx) < 50 && Math.abs(playerBody.position.y - m.position.y) < 50) {
+                            fightState.health -= 0.2;
+                        }
+                    });
+
+                    document.getElementById('health-bar').style.width = fightState.health + '%';
+                    document.getElementById('fight-score').innerText = `KILLS: ${fightState.kills}/20`;
+                    
+                    if(fightState.health <= 0) { gameState = 'gameover'; updateUI('gameover'); }
+
+                    camera.x = -playerBody.position.x + GAME_WIDTH * 0.5;
+                    camera.y = 0; // Fixed Y camera
+                }
+                // ---------------------
+
                 if (level === 6 && gameState === 'playing' && !isPaused) {
                     if (Math.random() > 0.985) { 
                         const meteorX = car.chassis.position.x + 300 + Math.random() * 800;
@@ -1009,156 +1167,156 @@
                     }
                 }
 
-                if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
-                    document.getElementById('dumb-message').classList.add('active');
-                    setTimeout(() => { gameState = 'gameover'; updateUI('gameover'); }, 1500);
-                } else if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
-                    Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); 
-                    if(equipped.car !== 'car_boat') {
-                        Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); 
-                        Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); 
-                    }
-                    Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); 
-                    Matter.Body.setAngularVelocity(car.chassis, 0);
-                }
-                
-                if (level === 5 && equipped.car === 'car_boat') {
-                    const time = Date.now() / 1000;
-                    
-                    const points = [
-                        { x: car.chassis.position.x - 40, offset: -40 },
-                        { x: car.chassis.position.x + 40, offset: 40 }
-                    ];
-
-                    points.forEach(pt => {
-                        const waterLevel = calculateWaterHeight(pt.x, time);
-                        const pointY = car.chassis.position.y + (Math.sin(car.chassis.angle) * pt.offset);
-
-                        if (pointY > waterLevel) {
-                            const depth = pointY - waterLevel;
-                            Matter.Body.applyForce(car.chassis, { x: pt.x, y: pointY }, { x: 0, y: -0.003 * depth });
+                if (level !== 7 && car) { // Existing Logic wrapper
+                    if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
+                        document.getElementById('dumb-message').classList.add('active');
+                        setTimeout(() => { gameState = 'gameover'; updateUI('gameover'); }, 1500);
+                    } else if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
+                        Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); 
+                        if(equipped.car !== 'car_boat') {
+                            Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); 
+                            Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); 
                         }
-                    });
-
-                    Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.95 });
+                        Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); 
+                        Matter.Body.setAngularVelocity(car.chassis, 0);
+                    }
                     
-                    if (keys['KeyS']) {
-                        Matter.Body.applyForce(car.chassis, { x: car.chassis.position.x + 50, y: car.chassis.position.y }, { x: 0, y: 0.005 });
+                    if (level === 5 && equipped.car === 'car_boat') {
+                        const time = Date.now() / 1000;
+                        
+                        const points = [
+                            { x: car.chassis.position.x - 40, offset: -40 },
+                            { x: car.chassis.position.x + 40, offset: 40 }
+                        ];
+
+                        points.forEach(pt => {
+                            const waterLevel = calculateWaterHeight(pt.x, time);
+                            const pointY = car.chassis.position.y + (Math.sin(car.chassis.angle) * pt.offset);
+
+                            if (pointY > waterLevel) {
+                                const depth = pointY - waterLevel;
+                                Matter.Body.applyForce(car.chassis, { x: pt.x, y: pointY }, { x: 0, y: -0.003 * depth });
+                            }
+                        });
+
+                        Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.95 });
+                        
+                        if (keys['KeyS']) {
+                            Matter.Body.applyForce(car.chassis, { x: car.chassis.position.x + 50, y: car.chassis.position.y }, { x: 0, y: 0.005 });
+                        }
+
+                        if (Math.abs(car.chassis.angle) > 2.8) { 
+                            gameState = 'gameover';
+                            updateUI('gameover');
+                        }
                     }
-
-                    if (Math.abs(car.chassis.angle) > 2.8) { 
-                        gameState = 'gameover';
-                        updateUI('gameover');
-                    }
-                }
-                
-                if (level === 4 && alienAlive) {
-                    const alienX = 20000;
-                    if (Math.abs(car.chassis.position.x - alienX) < 400) alienAlive = false; 
-                }
-
-                let MAX_SPEED = 0.5; 
-                if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
-                else if(equipped.car === 'car_bobby') MAX_SPEED = 1.0; // 60 KM/H for Bobby Car
-
-                if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
-                
-                let speedRaw = 0;
-                if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity);
-                else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
-
-                let displayMax = 30; 
-                if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
-                else if(equipped.car === 'car_bobby') displayMax = 60;
-
-                const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
-                document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
-
-                if (equipped.car === 'car_boat') {
-                    const downPedal = document.getElementById('down-pedal');
-                    if (keys['KeyS']) downPedal.classList.add('pressed'); else downPedal.classList.remove('pressed');
-
-                    if (keys['Shift'] && canBoost && boostFuel > 0) {
-                        isBoosting = true; boostFuel = Math.max(0, boostFuel - (100/300)); 
-                    } else { isBoosting = false; }
-
-                    if (boostFuel <= 0 && canBoost) { canBoost = false; boostCooldownTimer = 300; }
-                    if (!canBoost) {
-                        boostCooldownTimer--;
-                        let pct = 100 - (boostCooldownTimer / 300 * 100);
-                        document.getElementById('boost-bar').style.width = pct + '%';
-                        if (boostCooldownTimer <= 0) { canBoost = true; boostFuel = 100; }
-                    }
-                    const boostBar = document.getElementById('boost-bar');
-                    if(canBoost) boostBar.style.width = boostFuel + '%';
-                    boostBar.style.backgroundColor = !canBoost ? '#EF4444' : '#FACC15'; 
-                }
-
-                const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
-                if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
-                if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
-
-                if (equipped.car !== 'car_boat') {
-                    if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
-                    if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
-                    if (keys['Space']) {
-                        Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9);
-                        Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
-                        if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04);
-                    }
-                } else { 
-                     let moveForce = 0.06; 
-                     let maxBoatSpeed = 4.0; 
-                     if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
-
-                     if (keys['KeyD'] && car.chassis.velocity.x < maxBoatSpeed) {
-                         Matter.Body.applyForce(car.chassis, car.chassis.position, { x: moveForce, y: 0 }); 
-                         if (car.chassis.angle < -0.2) { 
-                             Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.02);
-                         }
-                     }
-                     if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.008, y: 0 });
-                }
-                
-                if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
-
-                // PARTICLE GENERATION LOGIC (UPDATED WITH TRAILS)
-                if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
-                    const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; 
-                    const dirtY = car.wheelBack.position.y + 15;
                     
-                    let pType = 'dirt';
-                    let pColor = null;
-
-                    // PRIORITY 1: EQUIPPED TRAIL
-                    if (equipped.trail) {
-                        pType = 'trail';
-                        const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail);
-                        if(trailItem) pColor = trailItem.color;
-                    }
-                    // PRIORITY 2: CAR SPECIAL EFFECTS
-                    else if (equipped.car === 'car_bobby') {
-                        pType = 'money';
+                    if (level === 4 && alienAlive) {
+                        const alienX = 20000;
+                        if (Math.abs(car.chassis.position.x - alienX) < 400) alienAlive = false; 
                     }
 
-                    if(Math.random() > 0.5) particles.push({ 
-                        x: dirtX, 
-                        y: dirtY, 
-                        vx: (Math.random() - 0.5) * 4 - 2, 
-                        vy: -Math.random() * 3 - 1, 
-                        life: 1.0, 
-                        type: pType,
-                        color: pColor
-                    });
-                }
+                    let MAX_SPEED = 0.5; 
+                    if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
+                    else if(equipped.car === 'car_bobby') MAX_SPEED = 1.0; 
 
-                if (Math.abs(car.chassis.velocity.x) > 1) {
-                     const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
-                    if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
-                }
+                    if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
+                    
+                    let speedRaw = 0;
+                    if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity);
+                    else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
 
-                for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; if (p.life <= 0) particles.splice(i, 1); }
-                const dist = Math.floor(car.chassis.position.x / 100); if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
+                    let displayMax = 30; 
+                    if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
+                    else if(equipped.car === 'car_bobby') displayMax = 60;
+
+                    const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
+                    document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
+
+                    if (equipped.car === 'car_boat') {
+                        const downPedal = document.getElementById('down-pedal');
+                        if (keys['KeyS']) downPedal.classList.add('pressed'); else downPedal.classList.remove('pressed');
+
+                        if (keys['Shift'] && canBoost && boostFuel > 0) {
+                            isBoosting = true; boostFuel = Math.max(0, boostFuel - (100/300)); 
+                        } else { isBoosting = false; }
+
+                        if (boostFuel <= 0 && canBoost) { canBoost = false; boostCooldownTimer = 300; }
+                        if (!canBoost) {
+                            boostCooldownTimer--;
+                            let pct = 100 - (boostCooldownTimer / 300 * 100);
+                            document.getElementById('boost-bar').style.width = pct + '%';
+                            if (boostCooldownTimer <= 0) { canBoost = true; boostFuel = 100; }
+                        }
+                        const boostBar = document.getElementById('boost-bar');
+                        if(canBoost) boostBar.style.width = boostFuel + '%';
+                        boostBar.style.backgroundColor = !canBoost ? '#EF4444' : '#FACC15'; 
+                    }
+
+                    const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
+                    if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
+                    if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
+
+                    if (equipped.car !== 'car_boat') {
+                        if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
+                        if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
+                        if (keys['Space']) {
+                            Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9);
+                            Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
+                            if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04);
+                        }
+                    } else { 
+                        let moveForce = 0.06; 
+                        let maxBoatSpeed = 4.0; 
+                        if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
+
+                        if (keys['KeyD'] && car.chassis.velocity.x < maxBoatSpeed) {
+                            Matter.Body.applyForce(car.chassis, car.chassis.position, { x: moveForce, y: 0 }); 
+                            if (car.chassis.angle < -0.2) { 
+                                Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.02);
+                            }
+                        }
+                        if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.008, y: 0 });
+                    }
+                    
+                    if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
+
+                    // PARTICLE GENERATION LOGIC (UPDATED WITH TRAILS)
+                    if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
+                        const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; 
+                        const dirtY = car.wheelBack.position.y + 15;
+                        
+                        let pType = 'dirt';
+                        let pColor = null;
+
+                        if (equipped.trail) {
+                            pType = 'trail';
+                            const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail);
+                            if(trailItem) pColor = trailItem.color;
+                        }
+                        else if (equipped.car === 'car_bobby') {
+                            pType = 'money';
+                        }
+
+                        if(Math.random() > 0.5) particles.push({ 
+                            x: dirtX, 
+                            y: dirtY, 
+                            vx: (Math.random() - 0.5) * 4 - 2, 
+                            vy: -Math.random() * 3 - 1, 
+                            life: 1.0, 
+                            type: pType,
+                            color: pColor
+                        });
+                    }
+
+                    if (Math.abs(car.chassis.velocity.x) > 1) {
+                        const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
+                        if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
+                    }
+
+                    for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; if (p.life <= 0) particles.splice(i, 1); }
+                    const dist = Math.floor(car.chassis.position.x / 100); if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
+                }
             }
             draw();
             if (gameState !== 'stop') animationFrameId = requestAnimationFrame(gameLoop);
@@ -1172,6 +1330,7 @@
             if (level === 4) bgColor = '#1e1b4b';
             if (level === 5) bgColor = '#60A5FA';
             if (level === 6) bgColor = '#2a0a0a';
+            if (level === 7) bgColor = '#374151';
             
             ctx.fillStyle = bgColor;
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
@@ -1184,7 +1343,96 @@
 
             const time = Date.now() / 1000;
             
-            if (level === 6) {
+            if (level === 7) {
+                // LEVEL 7 DRAWING
+                // Draw Ground
+                ctx.fillStyle = '#111';
+                ctx.fillRect(-camera.x, GAME_HEIGHT - 50, GAME_WIDTH*3, 100);
+
+                // Draw Weapons
+                groundWeapons.forEach(w => {
+                    ctx.save();
+                    ctx.translate(w.position.x, w.position.y);
+                    ctx.rotate(w.angle);
+                    ctx.font = "30px Arial";
+                    const icon = w.wType === 'sword' ? '🗡️' : (w.wType === 'axe' ? '🪓' : '🏏');
+                    ctx.fillText(icon, -15, 10);
+                    ctx.restore();
+                });
+
+                // Draw Stickman Player
+                const px = playerBody.position.x;
+                const py = playerBody.position.y;
+                
+                ctx.save();
+                ctx.translate(px, py);
+                if (fightState.direction === -1) ctx.scale(-1, 1);
+
+                // Stickman Body
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.moveTo(0, -30); // Neck
+                ctx.lineTo(0, 20);  // Hip
+                ctx.stroke();
+
+                // Legs (Animate)
+                const legAnim = Math.sin(Date.now() / 100) * 10;
+                ctx.beginPath();
+                ctx.moveTo(0, 20);
+                ctx.lineTo(-10 + (Math.abs(playerBody.velocity.x) > 0.1 ? legAnim : 0), 50);
+                ctx.moveTo(0, 20);
+                ctx.lineTo(10 - (Math.abs(playerBody.velocity.x) > 0.1 ? legAnim : 0), 50);
+                ctx.stroke();
+
+                // Arms (Animate Attack)
+                ctx.beginPath();
+                ctx.moveTo(0, -20);
+                if (fightState.isAttacking && keys['KeyK']) {
+                    ctx.lineTo(30, -20); // Punch
+                } else if(fightState.weapon !== 'fist') {
+                    ctx.lineTo(20, -10); // Hold weapon
+                    const wIcon = fightState.weapon === 'sword' ? '🗡️' : (fightState.weapon === 'axe' ? '🪓' : '🏏');
+                    ctx.font = '30px Arial';
+                    ctx.fillText(wIcon, 20, -10);
+                } else {
+                    ctx.lineTo(15, 10);
+                }
+                ctx.stroke();
+
+                if (fightState.isAttacking && keys['KeyJ']) {
+                    ctx.beginPath();
+                    ctx.moveTo(0, 20);
+                    ctx.lineTo(30, 10); // Kick
+                    ctx.stroke();
+                }
+
+                // Head
+                let drawHead = headImg;
+                if(equipped.driver === 'driver_sigma') drawHead = headSigmaImg;
+                ctx.drawImage(drawHead, -15, -60, 30, 30);
+
+                ctx.restore();
+
+                // Draw Monsters
+                monsters.forEach(m => {
+                    ctx.save();
+                    ctx.translate(m.position.x, m.position.y);
+                    ctx.fillStyle = 'red';
+                    ctx.fillRect(-20, -45, 40, 90);
+                    // Eyes
+                    ctx.fillStyle = 'yellow';
+                    ctx.fillRect(-10, -35, 8, 8);
+                    ctx.fillRect(2, -35, 8, 8);
+                    // HP Bar
+                    ctx.fillStyle = 'black';
+                    ctx.fillRect(-20, -60, 40, 5);
+                    ctx.fillStyle = 'green';
+                    ctx.fillRect(-20, -60, 40 * (m.hp / 50), 5);
+                    ctx.restore();
+                });
+
+            } else if (level === 6) {
                 ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
                 for(let i=0; i<50; i++) {
                     const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200));
@@ -1250,16 +1498,35 @@
 
             if (engine) {
                 const bodies = Matter.Composite.allBodies(engine.world);
-                const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
-                const finishX = config.targetDistance * 100;
                 
-                ctx.save(); ctx.translate(finishX, 400); 
-                for(let i=0; i<10; i++) { ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#000000'; ctx.fillRect(-10, 0, 40, 20); }
-                ctx.fillStyle = '#C0C0C0'; ctx.fillRect(20, -200, 5, 200);
-                ctx.fillStyle = level === 3 ? '#FFD700' : (level === 2 ? '#3B82F6' : '#EF4444');
-                ctx.beginPath(); ctx.moveTo(25, -200); ctx.lineTo(80, -180); ctx.lineTo(25, -160); ctx.fill();
-                for(let r=0; r<2; r++) for(let c=0; c<3; c++) { ctx.fillStyle = (r+c)%2===0?'black':'white'; ctx.fillRect(25+c*10, -160+r*10, 10, 10); }
-                ctx.fillStyle = "#FACC15"; ctx.font = "bold 30px sans-serif"; ctx.fillText("FINISH", 0, -220); ctx.restore();
+                if (level !== 7) { // Only draw normal bodies if NOT level 7
+                    // ... (Normal body drawing loop) ...
+                    bodies.forEach(body => {
+                        if (body.label === 'ground') {
+                            ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 600); 
+                            if (level === 6) ctx.fillStyle = '#1f1f1f'; 
+                            else ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; 
+                            ctx.fill();
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 20); 
+                            if (level === 6) ctx.fillStyle = '#7f1d1d';
+                            else ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); 
+                            ctx.fill();
+                            ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); 
+                            ctx.restore();
+                        }
+                    });
+                    
+                    const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
+                    const finishX = config.targetDistance * 100;
+                    ctx.save(); ctx.translate(finishX, 400); 
+                    for(let i=0; i<10; i++) { ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#000000'; ctx.fillRect(-10, 0, 40, 20); }
+                    ctx.fillStyle = '#C0C0C0'; ctx.fillRect(20, -200, 5, 200);
+                    ctx.fillStyle = level === 3 ? '#FFD700' : (level === 2 ? '#3B82F6' : '#EF4444');
+                    ctx.beginPath(); ctx.moveTo(25, -200); ctx.lineTo(80, -180); ctx.lineTo(25, -160); ctx.fill();
+                    for(let r=0; r<2; r++) for(let c=0; c<3; c++) { ctx.fillStyle = (r+c)%2===0?'black':'white'; ctx.fillRect(25+c*10, -160+r*10, 10, 10); }
+                    ctx.fillStyle = "#FACC15"; ctx.font = "bold 30px sans-serif"; ctx.fillText("FINISH", 0, -220); ctx.restore();
+                }
 
                 if (level === 4 && alienAlive) {
                     const alienX = 20000;
@@ -1282,84 +1549,6 @@
                     }
                 }
 
-                if (level === 5) {
-                    const baseHeight = GAME_HEIGHT * 0.7;
-                    const screenStart = -camera.x - 100;
-                    const screenEnd = -camera.x + GAME_WIDTH + 100;
-                    
-                    ctx.fillStyle = '#1e3a8a'; 
-                    ctx.beginPath();
-                    ctx.moveTo(screenStart, GAME_HEIGHT + 200);
-                    for (let x = screenStart; x <= screenEnd; x += 30) {
-                        const y = calculateWaterHeight(x, time);
-                        ctx.lineTo(x, y);
-                    }
-                    ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
-                    ctx.fill();
-
-                    if (krakenState.active) {
-                        ctx.save();
-                        ctx.translate(8000, krakenState.y); 
-                        ctx.font = "200px Arial";
-                        ctx.fillText("🐙", 0, 0);
-                        
-                        ctx.font = "bold 40px Comic Sans MS";
-                        ctx.fillStyle = "white";
-                        ctx.strokeStyle = "black";
-                        ctx.lineWidth = 4;
-                        ctx.strokeText("Naber, captain?", -100, -150);
-                        ctx.fillText("Naber, captain?", -100, -150);
-                        ctx.restore();
-                    }
-
-                    ctx.fillStyle = 'rgba(147, 197, 253, 0.6)';
-                    ctx.beginPath();
-                    ctx.moveTo(screenStart, GAME_HEIGHT + 200);
-                    for (let x = screenStart; x <= screenEnd; x += 15) {
-                        const y = calculateWaterHeight(x, time) + 10; 
-                        ctx.lineTo(x, y);
-                    }
-                    ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
-                    ctx.fill();
-                    
-                    for(let i=0; i<15; i++) { 
-                        let speed = (time * 100) + (i * 50);
-                        let fx = -camera.x + ((i * 300 + time * 50) % (GAME_WIDTH + 800));
-                        if(fx < -50) fx += (GAME_WIDTH + 800);
-                        
-                        const waveHeightAtFishX = calculateWaterHeight(fx, time);
-                        const fy = waveHeightAtFishX + 80;
-
-                        ctx.save();
-                        ctx.translate(fx, fy);
-                        ctx.scale(i % 2 === 0 ? 1 : -1, 1);
-                        ctx.font = "40px Arial";
-                        ctx.fillStyle = "#A855F7";
-                        ctx.fillText("🐟", 0, 0);
-                        ctx.restore();
-                    }
-                } else {
-                    bodies.forEach(body => {
-                        if (body.label === 'ground') {
-                            ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
-                            ctx.beginPath(); ctx.rect(-70, -300, 140, 600); 
-                            
-                            if (level === 6) ctx.fillStyle = '#1f1f1f'; 
-                            else ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; 
-                            ctx.fill();
-                            
-                            ctx.beginPath(); ctx.rect(-70, -300, 140, 20); 
-                            
-                            if (level === 6) ctx.fillStyle = '#7f1d1d';
-                            else ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); 
-                            ctx.fill();
-
-                            ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); 
-                            ctx.restore();
-                        }
-                    });
-                }
-
                 bodies.forEach(body => {
                     if (body.label === 'coin' && !body.isCollected) {
                         ctx.save(); ctx.translate(body.position.x, body.position.y);
@@ -1379,9 +1568,8 @@
                 particles.forEach(p => {
                     ctx.save(); ctx.globalAlpha = p.life;
                     
-                    // PARTICLE DRAWING LOGIC (UPDATED)
                     if (p.type === 'money') {
-                        ctx.fillStyle = '#10B981'; // Money Green
+                        ctx.fillStyle = '#10B981'; 
                         ctx.font = "bold 14px sans-serif";
                         ctx.fillText("$", p.x, p.y);
                     } 
@@ -1404,9 +1592,8 @@
                     ctx.restore();
                 });
 
-                if (car && car.chassis) {
+                if (level !== 7 && car && car.chassis) { // Only draw car if NOT level 7
                     const wheelRad = 18;
-                    // Visual wheel size:
                     const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
 
                     if(equipped.car !== 'car_boat') { 
@@ -1421,13 +1608,11 @@
                     ctx.save(); ctx.translate(car.chassis.position.x, car.chassis.position.y); ctx.rotate(car.chassis.angle);
                     if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
                     
-                    // --- CAR DRAWING LOGIC (UPDATED) ---
                     let drawImg = carImg;
                     if(equipped.car === 'car_boat') drawImg = boatImg;
                     else if(equipped.car === 'car_bobby') drawImg = carBobbyImg; 
 
                     if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
-                    // -----------------------------------
                     
                     ctx.restore(); 
 
