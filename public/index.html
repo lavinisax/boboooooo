@@ -300,25 +300,54 @@
             color: rgba(255,255,255,0.3); font-weight: bold; pointer-events: none;
         }
 
-        /* Level 7 UI Elements */
+        /* --- LEVEL 7 UI REVISED --- */
         #fight-ui {
-            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
-            display: none; flex-direction: column; align-items: center; z-index: 45;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; pointer-events: none; z-index: 90;
         }
+        
+        #fight-hud {
+            position: absolute; top: 20px; left: 20px;
+            display: flex; flex-direction: column; gap: 5px;
+        }
+
         #health-bar-container {
-            width: 300px; height: 20px; background: #374151; border: 2px solid white; border-radius: 10px; overflow: hidden;
+            width: 350px; height: 35px; 
+            background: #2a0a0a; border: 3px solid #FACC15; 
+            transform: skew(-15deg); overflow: hidden;
+            box-shadow: 5px 5px 0px rgba(0,0,0,0.5);
         }
         #health-bar {
-            width: 100%; height: 100%; background: #EF4444; transition: width 0.2s;
+            width: 100%; height: 100%; 
+            background: linear-gradient(90deg, #fbbf24, #ef4444); 
+            transition: width 0.1s ease-out;
         }
+        #health-text {
+            position: absolute; top: 0; left: 10px; font-weight: bold; font-family: 'Impact'; color: white; text-shadow: 1px 1px 0 black; line-height: 35px;
+            font-size: 1.2rem; transform: skew(15deg);
+        }
+
         #fight-score {
-            font-family: 'Impact', sans-serif; font-size: 2rem; color: #FACC15; text-shadow: 2px 2px 0 black; margin-top: 5px;
+            font-family: 'Impact', sans-serif; font-size: 2.5rem; color: #EF4444; 
+            text-shadow: 2px 2px 0 black; margin-top: 5px;
+            background: rgba(0,0,0,0.7); padding: 5px 15px; display: inline-block;
+            transform: skew(-15deg); border-left: 5px solid #EF4444;
         }
+
         #fight-controls {
-            position: absolute; bottom: 100px; width: 100%; text-align: center;
-            font-family: monospace; color: white; font-weight: bold; font-size: 1.2rem;
-            text-shadow: 1px 1px 2px black; display: none; z-index: 45; pointer-events: none;
+            position: absolute; bottom: 30px; width: 100%; text-align: center;
+            font-family: 'Impact', monospace; color: rgba(255,255,255,0.9); 
+            font-size: 1.5rem; text-shadow: 2px 2px 10px black; letter-spacing: 2px;
+            display: none; z-index: 45; pointer-events: none;
         }
+
+        #ko-text {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
+            font-size: 8rem; color: #EF4444; font-family: 'Impact'; font-style: italic;
+            text-shadow: 5px 5px 0 black, 0 0 30px red; pointer-events: none; opacity: 0;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        #ko-text.active { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
@@ -337,11 +366,18 @@
         <div id="level3-message">NOW IT'S GETTING HARDER... 😈</div>
         <div id="tutorial-text">D - İLERİ<br>A - GERİ<br>SPACE - FREN</div>
 
+        <!-- FIGHT UI -->
         <div id="fight-ui">
-            <div id="health-bar-container"><div id="health-bar"></div></div>
-            <div id="fight-score">KILLS: 0/20</div>
+            <div id="fight-hud">
+                <div id="health-bar-container">
+                    <div id="health-bar"></div>
+                    <div id="health-text">BOB HEALTH</div>
+                </div>
+                <div id="fight-score">KILLS: 0/20</div>
+            </div>
+            <div id="ko-text">K.O.!</div>
         </div>
-        <div id="fight-controls">K - PUNCH | J - KICK | SPACE - JUMP</div>
+        <div id="fight-controls">A/D:MOVE | SPACE:JUMP | K:PUNCH | J:HIGH KICK</div>
 
         <button id="btn-ingame-settings" onclick="toggleInGameSettings()">⚙️</button>
         
@@ -426,8 +462,8 @@
                 </button>
                 <!-- LEVEL 7 BUTTON -->
                 <button class="level-btn" onclick="selectLevel(7)">
-                    <span id="lvl-btn-7" style="color:#DC2626; border: 1px solid red;">LEVEL 7: STREET FIGHTER 🥊</span>
-                    <span class="level-info">FIGHT!</span>
+                    <span id="lvl-btn-7" style="color:#DC2626; border: 1px solid red;">LEVEL 7: BOSS BATTLE 🥊</span>
+                    <span class="level-info">SURVIVE!</span>
                 </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
@@ -526,8 +562,15 @@
             attackTimer: 0,
             direction: 1 // 1 right, -1 left
         };
+        let fightIntroState = {
+            active: false,
+            phase: 'drive', // drive, brake, exit
+            timer: 0
+        };
         let monsters = [];
         let groundWeapons = [];
+        let bloodParticles = [];
+        let floatingTexts = [];
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
@@ -570,7 +613,7 @@
                 level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
                 level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: OKYANUS",
                 level6Name: "LEVEL 6: YANARDAĞ ZİRVESİ",
-                level7Name: "LEVEL 7: SOKAK DÖVÜŞÇÜSÜ",
+                level7Name: "LEVEL 7: BOSS BATTLE 🥊",
                 tutorial: "D-İLERİ  A-GERİ  SPACE-FREN  S-BURUN AŞAĞI", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
                 winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
@@ -594,7 +637,7 @@
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
                 level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: OCEAN",
                 level6Name: "LEVEL 6: MAGMA PEAK",
-                level7Name: "LEVEL 7: STREET FIGHTER",
+                level7Name: "LEVEL 7: BOSS BATTLE 🥊",
                 tutorial: "D-GAS  A-BACK  SPACE-BRAKE  S-NOSE DOWN", level3Msg: "NOW IT'S GETTING HARDER... 😈",
                 winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
@@ -627,7 +670,7 @@
                 'lvl-btn-1': t.level1Name + " - 140m", 'lvl-btn-2': t.level2Name + " - 100m", 'lvl-btn-3': t.level3Name + " - 200m",
                 'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 150m",
                 'lvl-btn-6': t.level6Name + " - 300m", 
-                'lvl-btn-7': t.level7Name + " - 20 kills", 
+                'lvl-btn-7': t.level7Name, 
                 'lbl-lang': t.langLabel, 'btn-toggle-sugg': t.suggTitle, 'btn-submit': t.submit,
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
@@ -817,11 +860,12 @@
             document.getElementById('dumb-message').classList.remove('active');
             document.getElementById('fight-ui').style.display = 'none';
             document.getElementById('fight-controls').style.display = 'none';
+            document.getElementById('ko-text').classList.remove('active');
 
             if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
             else if (state === 'playing') {
                 if (level === 7) {
-                    document.getElementById('fight-ui').style.display = 'flex';
+                    document.getElementById('fight-ui').style.display = 'block';
                     document.getElementById('fight-controls').style.display = 'block';
                     document.getElementById('btn-ingame-settings').style.display = 'block';
                 } else {
@@ -849,7 +893,7 @@
                 if(level === 4) bg = '#1e1b4b'; 
                 if(level === 5) bg = '#60A5FA'; 
                 if(level === 6) bg = '#2a0a0a'; 
-                if(level === 7) bg = '#374151'; // Street Fighter BG
+                if(level === 7) bg = '#111'; 
                 document.getElementById('game-container').style.backgroundColor = bg;
 
             } else if (state === 'gameover') {
@@ -876,8 +920,9 @@
             krakenState = { active: false, y: 1000, msgAlpha: 0 };
             
             // Level 7 Reset
-            fightState.health = 100; fightState.kills = 0; fightState.weapon = 'fist'; monsters = []; groundWeapons = [];
-            
+            fightState.health = 100; fightState.kills = 0; fightState.weapon = 'fist'; monsters = []; groundWeapons = []; bloodParticles = []; floatingTexts = [];
+            fightIntroState = { active: true, phase: 'drive', timer: 0 };
+
             if (level === 5) {
                 spawnInvincibility = true; 
                 setTimeout(() => { spawnInvincibility = false; }, 2000);
@@ -904,18 +949,17 @@
 
             if (level === 7) {
                 // LEVEL 7 PHYSICS SETUP
-                const ground = Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 50, GAME_WIDTH * 3, 100, { isStatic: true, label: 'ground' });
+                const ground = Bodies.rectangle(GAME_WIDTH/2, GAME_HEIGHT - 30, GAME_WIDTH * 3, 60, { isStatic: true, label: 'ground' });
                 const leftWall = Bodies.rectangle(-GAME_WIDTH, GAME_HEIGHT/2, 100, GAME_HEIGHT*3, { isStatic: true });
                 const rightWall = Bodies.rectangle(GAME_WIDTH*2, GAME_HEIGHT/2, 100, GAME_HEIGHT*3, { isStatic: true });
                 
-                playerBody = Bodies.rectangle(200, GAME_HEIGHT - 200, 40, 100, { 
-                    inertia: Infinity, // Prevent rotation
-                    friction: 0.01,
-                    label: 'player'
-                });
+                // Spawn Car for Intro
+                createCar(world, Bodies, Composite, Constraint, -300, GAME_HEIGHT - 100);
+
+                // Player is NOT created yet (waits for intro to finish)
+                playerBody = null;
                 
-                Composite.add(world, [ground, leftWall, rightWall, playerBody]);
-                car = null; 
+                Composite.add(world, [ground, leftWall, rightWall]);
                 return;
             }
 
@@ -973,45 +1017,7 @@
             let startX = 200; let startY = GAME_HEIGHT * 0.5;
             if (level === 5) { startX = 100; startY = GAME_HEIGHT * 0.4; }
 
-            let density = 0.004; if(equipped.car === 'car_boat') density = 0.002;
-            const chassisOptions = { density: density, friction: 0.5, label: 'chassis', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
-            if(equipped.car === 'car_boat') chassisOptions.inertia = Infinity; 
-            
-            const chassis = Bodies.rectangle(startX, startY, 130, 40, chassisOptions);
-            if(equipped.car === 'car_boat') Matter.Body.setInertia(chassis, 50000);
-
-            // WHEEL SIZE LOGIC
-            let wheelRadius = 18; 
-            if (equipped.car === 'car_bobby') wheelRadius = 12; // SMALLER WHEELS
-
-            const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
-            const wheelOffset = 35; 
-            
-            const isBoat = equipped.car === 'car_boat';
-            let wheelBack, wheelFront, shockBack, shockFront;
-
-            if (!isBoat) {
-                wheelBack = Bodies.circle(startX - wheelOffset, startY + 30, wheelRadius, wheelOptions);
-                wheelFront = Bodies.circle(startX + wheelOffset, startY + 30, wheelRadius, wheelOptions);
-                const suspensionOptions = { bodyA: chassis, stiffness: 0.08, damping: 0.5, length: 0 };
-                shockBack = Constraint.create({ ...suspensionOptions, bodyB: wheelBack, pointA: { x: -wheelOffset, y: 30 } });
-                shockFront = Constraint.create({ ...suspensionOptions, bodyB: wheelFront, pointA: { x: wheelOffset, y: 30 } });
-            }
-
-            // HEAD POSITION LOGIC
-            let headOffsetY = -50; 
-            if(isBoat) headOffsetY = -70; 
-            if(equipped.car === 'car_bobby') headOffsetY = -85; // HIGHER HEAD
-
-            const headBody = Bodies.circle(startX, startY + headOffsetY, 20, { density: 0.001, friction: 0.1, restitution: 0.2, label: 'driverHead', collisionFilter: { category: CAT_DRIVER, mask: CAT_GROUND } });
-            const neck = Constraint.create({ bodyA: chassis, bodyB: headBody, pointA: { x: -15, y: isBoat ? -45 : -25 }, stiffness: 0.2, damping: 0.1, length: 2 });
-            
-            Composite.add(world, [chassis, headBody, neck]); 
-            if (!isBoat) Composite.add(world, [wheelBack, wheelFront, shockBack, shockFront]); 
-
-            car = { chassis, wheelBack, wheelFront }; driverHead = headBody;
-            
-            if (level === 5) { Matter.Body.setVelocity(chassis, { x: 0, y: 0 }); Matter.Body.setAngle(chassis, 0); }
+            createCar(world, Bodies, Composite, Constraint, startX, startY, CAT_CAR, CAT_GROUND, CAT_COIN, CAT_FINISH);
 
             Events.on(engine, 'collisionStart', (event) => {
                 const pairs = event.pairs;
@@ -1039,6 +1045,56 @@
             });
         }
 
+        function createCar(world, Bodies, Composite, Constraint, startX, startY, catCar=0x0002, catGround=0x0004, catCoin=0x0010, catFinish=0x0020) {
+            let density = 0.004; if(equipped.car === 'car_boat') density = 0.002;
+            
+            const group = Matter.Body.nextGroup(true);
+            const collisionFilter = { group: group, category: catCar, mask: catGround | catCoin | catFinish };
+            if (level === 7) collisionFilter.mask = 0x0001; // Default for level 7 floor
+
+            const chassisOptions = { density: density, friction: 0.5, label: 'chassis', collisionFilter: collisionFilter };
+            if(equipped.car === 'car_boat') chassisOptions.inertia = Infinity; 
+            
+            const chassis = Bodies.rectangle(startX, startY, 130, 40, chassisOptions);
+            if(equipped.car === 'car_boat') Matter.Body.setInertia(chassis, 50000);
+
+            // WHEEL SIZE LOGIC
+            let wheelRadius = 18; 
+            if (equipped.car === 'car_bobby') wheelRadius = 12; // SMALLER WHEELS
+
+            const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: collisionFilter };
+            const wheelOffset = 35; 
+            
+            const isBoat = equipped.car === 'car_boat';
+            let wheelBack, wheelFront, shockBack, shockFront;
+
+            if (!isBoat) {
+                wheelBack = Bodies.circle(startX - wheelOffset, startY + 30, wheelRadius, wheelOptions);
+                wheelFront = Bodies.circle(startX + wheelOffset, startY + 30, wheelRadius, wheelOptions);
+                const suspensionOptions = { bodyA: chassis, stiffness: 0.08, damping: 0.5, length: 0 };
+                shockBack = Constraint.create({ ...suspensionOptions, bodyB: wheelBack, pointA: { x: -wheelOffset, y: 30 } });
+                shockFront = Constraint.create({ ...suspensionOptions, bodyB: wheelFront, pointA: { x: wheelOffset, y: 30 } });
+            }
+
+            // HEAD POSITION LOGIC
+            let headOffsetY = -50; 
+            if(isBoat) headOffsetY = -70; 
+            if(equipped.car === 'car_bobby') headOffsetY = -85; // HIGHER HEAD
+
+            const headBody = Bodies.circle(startX, startY + headOffsetY, 20, { density: 0.001, friction: 0.1, restitution: 0.2, label: 'driverHead', collisionFilter: { category: 0x0008, mask: catGround } });
+            // In level 7, head physics doesn't matter as much during intro
+            if(level === 7) headBody.collisionFilter = { group: group, mask: 0x0001 };
+
+            const neck = Constraint.create({ bodyA: chassis, bodyB: headBody, pointA: { x: -15, y: isBoat ? -45 : -25 }, stiffness: 0.2, damping: 0.1, length: 2 });
+            
+            Composite.add(world, [chassis, headBody, neck]); 
+            if (!isBoat) Composite.add(world, [wheelBack, wheelFront, shockBack, shockFront]); 
+
+            car = { chassis, wheelBack, wheelFront }; driverHead = headBody;
+            
+            if (level === 5) { Matter.Body.setVelocity(chassis, { x: 0, y: 0 }); Matter.Body.setAngle(chassis, 0); }
+        }
+
         function drawRain(ctx) {
             ctx.strokeStyle = 'rgba(200, 200, 255, 0.6)';
             ctx.lineWidth = 2;
@@ -1058,87 +1114,142 @@
 
                 // --- LEVEL 7 LOGIC ---
                 if (level === 7) {
-                    // Player Movement
-                    let velocityX = 0;
-                    if (keys['KeyD']) { velocityX = 5; fightState.direction = 1; }
-                    else if (keys['KeyA']) { velocityX = -5; fightState.direction = -1; }
                     
-                    Matter.Body.setVelocity(playerBody, { x: velocityX, y: playerBody.velocity.y });
-                    
-                    if (keys['Space'] && Math.abs(playerBody.velocity.y) < 0.1) {
-                        Matter.Body.setVelocity(playerBody, { x: playerBody.velocity.x, y: -15 });
-                    }
-
-                    // Attacks
-                    if ((keys['KeyK'] || keys['KeyJ']) && !fightState.isAttacking) {
-                        fightState.isAttacking = true;
-                        setTimeout(() => fightState.isAttacking = false, 300);
+                    // --- CINEMATIC INTRO ---
+                    if (fightIntroState.active) {
+                        if (fightIntroState.phase === 'drive') {
+                            if (equipped.car !== 'car_boat') {
+                                Matter.Body.setAngularVelocity(car.wheelBack, 0.4);
+                                Matter.Body.setAngularVelocity(car.wheelFront, 0.4);
+                            } else {
+                                Matter.Body.applyForce(car.chassis, car.chassis.position, {x:0.02, y:0});
+                            }
+                            if (car.chassis.position.x > 300) {
+                                fightIntroState.phase = 'brake';
+                            }
+                        } else if (fightIntroState.phase === 'brake') {
+                            if (equipped.car !== 'car_boat') {
+                                Matter.Body.setAngularVelocity(car.wheelBack, 0);
+                                Matter.Body.setAngularVelocity(car.wheelFront, 0);
+                            }
+                            Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.9, y: car.chassis.velocity.y });
+                            
+                            if (Math.abs(car.chassis.velocity.x) < 0.1) {
+                                fightIntroState.phase = 'exit';
+                                
+                                // SPAWN PLAYER
+                                playerBody = Matter.Bodies.rectangle(car.chassis.position.x, car.chassis.position.y - 50, 40, 90, { 
+                                    inertia: Infinity, friction: 0.1, label: 'player'
+                                });
+                                Matter.Composite.add(engine.world, playerBody);
+                                
+                                // Make car background
+                                car.chassis.collisionFilter = { group: -1, category: 0, mask: 0 };
+                                if(car.wheelBack) car.wheelBack.collisionFilter = { group: -1, category: 0, mask: 0 };
+                                if(car.wheelFront) car.wheelFront.collisionFilter = { group: -1, category: 0, mask: 0 };
+                                driverHead.render.visible = false; // Hide car head
+                                Matter.Composite.remove(engine.world, driverHead); // Remove head constraint logic
+                                
+                                fightIntroState.active = false;
+                            }
+                        }
+                        camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3;
+                    } 
+                    // --- FIGHTING PHASE ---
+                    else {
+                        // Player Movement
+                        let velocityX = 0;
+                        if (keys['KeyD']) { velocityX = 6; fightState.direction = 1; }
+                        else if (keys['KeyA']) { velocityX = -6; fightState.direction = -1; }
                         
-                        // Hitbox check
-                        monsters.forEach((m, index) => {
-                            const dist = Math.abs(m.position.x - playerBody.position.x);
-                            const dir = Math.sign(m.position.x - playerBody.position.x);
-                            if (dist < 80 && dir === fightState.direction && Math.abs(m.position.y - playerBody.position.y) < 50) {
-                                // HIT!
-                                m.hp -= (fightState.weapon !== 'fist' ? 35 : 15);
-                                Matter.Body.applyForce(m, m.position, { x: fightState.direction * 0.05, y: -0.05 });
-                                if (m.hp <= 0) {
-                                    Matter.Composite.remove(engine.world, m);
-                                    monsters.splice(index, 1);
-                                    fightState.kills++;
-                                    if(fightState.kills >= 20) { gameState = 'win'; updateUI('win'); }
+                        Matter.Body.setVelocity(playerBody, { x: velocityX, y: playerBody.velocity.y });
+                        
+                        if (keys['Space'] && Math.abs(playerBody.velocity.y) < 0.1) {
+                            Matter.Body.setVelocity(playerBody, { x: playerBody.velocity.x, y: -18 });
+                        }
+
+                        // Attacks
+                        if ((keys['KeyK'] || keys['KeyJ']) && !fightState.isAttacking) {
+                            fightState.isAttacking = true;
+                            fightState.attackTimer = 0;
+                            const isKick = keys['KeyJ'];
+                            
+                            // Hitbox check
+                            monsters.forEach((m, index) => {
+                                const dist = Math.abs(m.position.x - playerBody.position.x);
+                                const dir = Math.sign(m.position.x - playerBody.position.x);
+                                const range = isKick ? 120 : 90;
+                                
+                                if (dist < range && dir === fightState.direction && Math.abs(m.position.y - playerBody.position.y) < 80) {
+                                    // HIT!
+                                    const dmg = isKick ? 25 : 15;
+                                    m.hp -= dmg;
+                                    Matter.Body.applyForce(m, m.position, { x: fightState.direction * (isKick ? 0.3 : 0.1), y: -0.1 });
+                                    
+                                    // Blood
+                                    for(let b=0; b<5; b++) {
+                                        bloodParticles.push({
+                                            x: m.position.x, y: m.position.y,
+                                            vx: (Math.random()-0.5)*10, vy: -5 - Math.random()*5,
+                                            life: 1.0
+                                        });
+                                    }
+
+                                    if (m.hp <= 0) {
+                                        Matter.Composite.remove(engine.world, m);
+                                        monsters.splice(index, 1);
+                                        fightState.kills++;
+                                        
+                                        // Floating K.O.
+                                        const ko = document.getElementById('ko-text');
+                                        ko.style.left = (m.position.x + camera.x) + "px";
+                                        ko.style.top = (m.position.y + camera.y) + "px";
+                                        ko.classList.add('active');
+                                        setTimeout(()=>ko.classList.remove('active'), 500);
+
+                                        if(fightState.kills >= 20) { gameState = 'win'; updateUI('win'); }
+                                    }
                                 }
+                            });
+                        }
+                        
+                        if(fightState.isAttacking) {
+                            fightState.attackTimer += 0.1;
+                            if(fightState.attackTimer > 1) fightState.isAttacking = false;
+                        }
+
+                        // Monster Spawning
+                        if (monsters.length < 4 && Math.random() > 0.985) {
+                            const side = Math.random() > 0.5 ? 1 : -1;
+                            const mx = playerBody.position.x + side * (600 + Math.random() * 200);
+                            const m = Matter.Bodies.rectangle(mx, GAME_HEIGHT - 200, 60, 120, { 
+                                friction: 0.1, label: 'monster', density: 0.02,
+                                inertia: Infinity // No tipping over
+                            });
+                            m.hp = 60;
+                            monsters.push(m);
+                            Matter.Composite.add(engine.world, m);
+                        }
+
+                        // Monster AI
+                        monsters.forEach(m => {
+                            const dx = playerBody.position.x - m.position.x;
+                            if (Math.abs(dx) > 50) {
+                                Matter.Body.setVelocity(m, { x: Math.sign(dx) * 2, y: m.velocity.y });
+                            }
+                            if (Math.abs(dx) < 60 && Math.abs(playerBody.position.y - m.position.y) < 60) {
+                                fightState.health -= 0.3;
                             }
                         });
-                    }
 
-                    // Weapon Spawning
-                    if (Math.random() > 0.99) {
-                        const type = ['sword', 'axe', 'bat'][Math.floor(Math.random()*3)];
-                        const w = Matter.Bodies.rectangle(playerBody.position.x + (Math.random()-0.5)*800, -100, 30, 30, { label: 'weapon', wType: type });
-                        groundWeapons.push(w);
-                        Matter.Composite.add(engine.world, w);
-                    }
-
-                    // Monster Spawning
-                    if (monsters.length < 3 && Math.random() > 0.98) {
-                        const side = Math.random() > 0.5 ? 1 : -1;
-                        const mx = playerBody.position.x + side * (400 + Math.random() * 200);
-                        const m = Matter.Bodies.rectangle(mx, GAME_HEIGHT - 200, 40, 90, { friction: 0.01, label: 'monster' });
-                        m.hp = 50;
-                        monsters.push(m);
-                        Matter.Composite.add(engine.world, m);
-                    }
-
-                    // Weapon Pickup
-                    groundWeapons.forEach((w, i) => {
-                        if (Matter.Collision.collides(playerBody, w)) {
-                            fightState.weapon = w.wType;
-                            Matter.Composite.remove(engine.world, w);
-                            groundWeapons.splice(i, 1);
-                            showNotification("WEAPON EQUIPPED: " + w.wType.toUpperCase());
-                        }
-                    });
-
-                    // Monster AI & Collision
-                    monsters.forEach(m => {
-                        const dx = playerBody.position.x - m.position.x;
-                        if (Math.abs(dx) > 40) {
-                            Matter.Body.setVelocity(m, { x: Math.sign(dx) * 2, y: m.velocity.y });
-                        }
+                        document.getElementById('health-bar').style.width = fightState.health + '%';
+                        document.getElementById('fight-score').innerText = `KILLS: ${fightState.kills}/20`;
                         
-                        if (Math.abs(dx) < 50 && Math.abs(playerBody.position.y - m.position.y) < 50) {
-                            fightState.health -= 0.2;
-                        }
-                    });
+                        if(fightState.health <= 0) { gameState = 'gameover'; updateUI('gameover'); }
 
-                    document.getElementById('health-bar').style.width = fightState.health + '%';
-                    document.getElementById('fight-score').innerText = `KILLS: ${fightState.kills}/20`;
-                    
-                    if(fightState.health <= 0) { gameState = 'gameover'; updateUI('gameover'); }
-
-                    camera.x = -playerBody.position.x + GAME_WIDTH * 0.5;
-                    camera.y = 0; // Fixed Y camera
+                        camera.x = -playerBody.position.x + GAME_WIDTH * 0.4;
+                        camera.y = 0;
+                    }
                 }
                 // ---------------------
 
@@ -1330,7 +1441,7 @@
             if (level === 4) bgColor = '#1e1b4b';
             if (level === 5) bgColor = '#60A5FA';
             if (level === 6) bgColor = '#2a0a0a';
-            if (level === 7) bgColor = '#374151';
+            if (level === 7) bgColor = '#110000'; // Dark Red Black
             
             ctx.fillStyle = bgColor;
             ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
@@ -1344,123 +1455,147 @@
             const time = Date.now() / 1000;
             
             if (level === 7) {
-                // LEVEL 7 DRAWING
-                // Draw Ground
-                ctx.fillStyle = '#111';
-                ctx.fillRect(-camera.x, GAME_HEIGHT - 50, GAME_WIDTH*3, 100);
-
-                // Draw Weapons
-                groundWeapons.forEach(w => {
-                    ctx.save();
-                    ctx.translate(w.position.x, w.position.y);
-                    ctx.rotate(w.angle);
-                    ctx.font = "30px Arial";
-                    const icon = w.wType === 'sword' ? '🗡️' : (w.wType === 'axe' ? '🪓' : '🏏');
-                    ctx.fillText(icon, -15, 10);
-                    ctx.restore();
-                });
-
-                // Draw Stickman Player
-                const px = playerBody.position.x;
-                const py = playerBody.position.y;
+                // --- LEVEL 7 VISUALS ---
                 
-                ctx.save();
-                ctx.translate(px, py);
-                if (fightState.direction === -1) ctx.scale(-1, 1);
+                // BACKGROUND SUN
+                const sunX = -camera.x + GAME_WIDTH/2;
+                const sunY = -camera.y + GAME_HEIGHT/3;
+                const gradient = ctx.createRadialGradient(sunX, sunY, 50, sunX, sunY, 400);
+                gradient.addColorStop(0, "rgba(255, 0, 0, 0.8)");
+                gradient.addColorStop(1, "rgba(50, 0, 0, 0)");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(-camera.x, -camera.y, GAME_WIDTH, GAME_HEIGHT);
 
-                // Stickman Body
-                ctx.strokeStyle = 'white';
-                ctx.lineWidth = 4;
-                ctx.beginPath();
-                ctx.moveTo(0, -30); // Neck
-                ctx.lineTo(0, 20);  // Hip
-                ctx.stroke();
-
-                // Legs (Animate)
-                const legAnim = Math.sin(Date.now() / 100) * 10;
-                ctx.beginPath();
-                ctx.moveTo(0, 20);
-                ctx.lineTo(-10 + (Math.abs(playerBody.velocity.x) > 0.1 ? legAnim : 0), 50);
-                ctx.moveTo(0, 20);
-                ctx.lineTo(10 - (Math.abs(playerBody.velocity.x) > 0.1 ? legAnim : 0), 50);
-                ctx.stroke();
-
-                // Arms (Animate Attack)
-                ctx.beginPath();
-                ctx.moveTo(0, -20);
-                if (fightState.isAttacking && keys['KeyK']) {
-                    ctx.lineTo(30, -20); // Punch
-                } else if(fightState.weapon !== 'fist') {
-                    ctx.lineTo(20, -10); // Hold weapon
-                    const wIcon = fightState.weapon === 'sword' ? '🗡️' : (fightState.weapon === 'axe' ? '🪓' : '🏏');
-                    ctx.font = '30px Arial';
-                    ctx.fillText(wIcon, 20, -10);
-                } else {
-                    ctx.lineTo(15, 10);
-                }
-                ctx.stroke();
-
-                if (fightState.isAttacking && keys['KeyJ']) {
+                // Draw Ground (Detailed)
+                ctx.fillStyle = '#1a0505';
+                ctx.fillRect(-camera.x, GAME_HEIGHT - 30, GAME_WIDTH*3, 60);
+                // Grid/Details on floor
+                ctx.strokeStyle = '#330000';
+                for(let i=0; i<100; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(0, 20);
-                    ctx.lineTo(30, 10); // Kick
+                    ctx.moveTo(i*100, GAME_HEIGHT-30);
+                    ctx.lineTo(i*100-20, GAME_HEIGHT+30);
                     ctx.stroke();
                 }
 
-                // Head
-                let drawHead = headImg;
-                if(equipped.driver === 'driver_sigma') drawHead = headSigmaImg;
-                ctx.drawImage(drawHead, -15, -60, 30, 30);
+                // Draw Player (Fighting Bob)
+                if (playerBody) {
+                    const px = playerBody.position.x;
+                    const py = playerBody.position.y;
+                    
+                    ctx.save();
+                    ctx.translate(px, py);
+                    if (fightState.direction === -1) ctx.scale(-1, 1);
 
-                ctx.restore();
+                    // SIGMA SUIT BODY
+                    ctx.fillStyle = 'black';
+                    // Torso
+                    ctx.beginPath();
+                    ctx.moveTo(-15, -30); ctx.lineTo(15, -30);
+                    ctx.lineTo(10, 10); ctx.lineTo(-10, 10);
+                    ctx.fill();
+                    // White shirt V
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath(); ctx.moveTo(-5, -30); ctx.lineTo(5, -30); ctx.lineTo(0, -15); ctx.fill();
 
-                // Draw Monsters
+                    // Legs
+                    ctx.strokeStyle = 'black'; ctx.lineWidth = 8;
+                    ctx.lineCap = 'round';
+                    
+                    // Back Leg
+                    ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(-10, 45); ctx.stroke();
+                    
+                    // Front/Kicking Leg
+                    ctx.save();
+                    ctx.translate(5, 10);
+                    let kickAngle = 0;
+                    if(fightState.isAttacking && keys['KeyJ']) {
+                        kickAngle = -Math.sin(fightState.attackTimer * Math.PI) * 2; // High kick rotation
+                    }
+                    ctx.rotate(kickAngle);
+                    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(5, 35); ctx.stroke();
+                    ctx.restore();
+
+                    // Arms
+                    ctx.lineWidth = 6;
+                    // Back Arm
+                    ctx.beginPath(); ctx.moveTo(-10, -20); ctx.lineTo(-20, 0); ctx.stroke();
+                    // Front Arm (Punching)
+                    ctx.beginPath(); ctx.moveTo(10, -20);
+                    if(fightState.isAttacking && keys['KeyK']) {
+                        ctx.lineTo(35, -25); // Punch extension
+                    } else {
+                        ctx.lineTo(25, -5); // Guard position
+                    }
+                    ctx.stroke();
+
+                    // HEAD (BIGGER)
+                    let drawHead = headImg;
+                    if(equipped.driver === 'driver_sigma') drawHead = headSigmaImg;
+                    
+                    ctx.save();
+                    ctx.translate(0, -45);
+                    ctx.scale(1.5, 1.5); // 150% Scale
+                    ctx.drawImage(drawHead, -15, -15, 30, 30);
+                    ctx.restore();
+
+                    ctx.restore();
+                }
+
+                // Draw Monsters (Shadow Demons)
                 monsters.forEach(m => {
                     ctx.save();
                     ctx.translate(m.position.x, m.position.y);
-                    ctx.fillStyle = 'red';
-                    ctx.fillRect(-20, -45, 40, 90);
-                    // Eyes
-                    ctx.fillStyle = 'yellow';
-                    ctx.fillRect(-10, -35, 8, 8);
-                    ctx.fillRect(2, -35, 8, 8);
-                    // HP Bar
-                    ctx.fillStyle = 'black';
-                    ctx.fillRect(-20, -60, 40, 5);
-                    ctx.fillStyle = 'green';
-                    ctx.fillRect(-20, -60, 40 * (m.hp / 50), 5);
+                    
+                    // Shadow Body
+                    ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                    ctx.shadowColor = 'black'; ctx.shadowBlur = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(-20, -60);
+                    ctx.bezierCurveTo(20, -70, 40, -20, 10, 60); // Jagged shape
+                    ctx.lineTo(-15, 60);
+                    ctx.bezierCurveTo(-40, 0, -50, -50, -20, -60);
+                    ctx.fill();
+                    
+                    // Hanging Arms
+                    ctx.strokeStyle = 'black'; ctx.lineWidth = 4;
+                    const armSwing = Math.sin(Date.now()/300 + m.position.x)*5;
+                    ctx.beginPath(); ctx.moveTo(-15, -30); ctx.quadraticCurveTo(-35, 0, -30+armSwing, 30); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(15, -30); ctx.quadraticCurveTo(35, 0, 30-armSwing, 30); ctx.stroke();
+
+                    // Glowing Red Eyes
+                    ctx.shadowColor = 'red'; ctx.shadowBlur = 15;
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(-10, -40, 6, 6);
+                    ctx.fillRect(4, -40, 6, 6);
+                    
+                    ctx.shadowBlur = 0;
                     ctx.restore();
                 });
 
+                // Blood Particles
+                for(let i=bloodParticles.length-1; i>=0; i--) {
+                    let b = bloodParticles[i];
+                    b.x += b.vx; b.y += b.vy; b.vy += 0.5; // Gravity
+                    b.life -= 0.05;
+                    ctx.fillStyle = `rgba(200, 0, 0, ${b.life})`;
+                    ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
+                    if(b.life<=0) bloodParticles.splice(i,1);
+                }
+
             } else if (level === 6) {
+                // Level 6 Drawing (unchanged mostly)
                 ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
                 for(let i=0; i<50; i++) {
                     const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200));
                     const ay = -camera.y + ((i * 243 + time * 200) % (GAME_HEIGHT + 200));
                     ctx.fillRect(ax, ay, 4, 4);
                 }
-                
                 meteors.forEach(m => {
-                    ctx.save();
-                    ctx.translate(m.position.x, m.position.y);
-                    ctx.rotate(m.angle);
-                    
-                    ctx.beginPath();
-                    ctx.arc(0, 0, m.circleRadius, 0, Math.PI * 2);
-                    ctx.fillStyle = '#451a03'; 
-                    ctx.fill();
-                    
-                    ctx.beginPath();
-                    ctx.arc(0, 0, m.circleRadius * 0.7, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ef4444'; 
-                    ctx.fill();
-                    
-                    ctx.globalAlpha = 0.6;
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.beginPath();
-                    ctx.arc(-m.circleRadius, -m.circleRadius, m.circleRadius, 0, Math.PI*2);
-                    ctx.fill();
-                    
+                    ctx.save(); ctx.translate(m.position.x, m.position.y); ctx.rotate(m.angle);
+                    ctx.beginPath(); ctx.arc(0, 0, m.circleRadius, 0, Math.PI * 2); ctx.fillStyle = '#451a03'; ctx.fill();
+                    ctx.beginPath(); ctx.arc(0, 0, m.circleRadius * 0.7, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill();
+                    ctx.globalAlpha = 0.6; ctx.fillStyle = '#f59e0b'; ctx.beginPath(); ctx.arc(-m.circleRadius, -m.circleRadius, m.circleRadius, 0, Math.PI*2); ctx.fill();
                     ctx.restore();
                 });
             }
@@ -1479,13 +1614,8 @@
                     const waterH = calculateWaterHeight(fx, time);
                     const fy = waterH + 80;
 
-                    ctx.save();
-                    ctx.translate(fx, fy);
-                    ctx.scale(i % 2 === 0 ? 1 : -1, 1); 
-                    ctx.font = "40px Arial";
-                    ctx.fillStyle = "#A855F7";
-                    ctx.fillText("🐟", 0, 0);
-                    ctx.restore();
+                    ctx.save(); ctx.translate(fx, fy); ctx.scale(i % 2 === 0 ? 1 : -1, 1); 
+                    ctx.font = "40px Arial"; ctx.fillStyle = "#A855F7"; ctx.fillText("🐟", 0, 0); ctx.restore();
                 } 
             }
             else if (level === 4) {
@@ -1499,7 +1629,7 @@
             if (engine) {
                 const bodies = Matter.Composite.allBodies(engine.world);
                 
-                if (level !== 7) { // Only draw normal bodies if NOT level 7
+                if (level !== 7) { 
                     // ... (Normal body drawing loop) ...
                     bodies.forEach(body => {
                         if (body.label === 'ground') {
@@ -1592,16 +1722,18 @@
                     ctx.restore();
                 });
 
-                if (level !== 7 && car && car.chassis) { // Only draw car if NOT level 7
+                if (car && car.chassis) { 
                     const wheelRad = 18;
                     const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
 
                     if(equipped.car !== 'car_boat') { 
                          [car.wheelBack, car.wheelFront].forEach(wheel => {
-                            ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
-                            ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
-                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
-                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
+                            if(wheel) {
+                                ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
+                                ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
+                                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
+                                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
+                            }
                         });
                     }
 
@@ -1616,7 +1748,8 @@
                     
                     ctx.restore(); 
 
-                    if (driverHead) {
+                    // In level 7, hide the head attached to the car during intro (handled in logic)
+                    if (driverHead && driverHead.render.visible !== false) {
                         ctx.save(); ctx.translate(driverHead.position.x, driverHead.position.y); ctx.rotate(car.chassis.angle); 
                         if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
                         
@@ -1630,16 +1763,6 @@
 
                         if (drawHead.complete && drawHead.naturalWidth !== 0) {
                             ctx.drawImage(drawHead, headXOffset, -25, 50, 50); ctx.filter = 'none';
-                            
-                            let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
-                            if (Math.abs(angle) > 1.0) { 
-                                document.getElementById('panic-overlay').classList.add('active'); 
-                                document.getElementById('panic-message').classList.add('active');
-                                [8, 22].forEach(xOff => { ctx.beginPath(); ctx.arc(xOff, -5, xOff === 22 ? 10 : 8, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(xOff, -5, 3, 0, Math.PI * 2); ctx.fillStyle = 'black'; ctx.fill(); });
-                            } else { 
-                                document.getElementById('panic-overlay').classList.remove('active'); 
-                                document.getElementById('panic-message').classList.remove('active'); 
-                            }
                         } else { ctx.fillStyle='#FFCC80'; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); } ctx.restore();
                     }
                 }
@@ -1662,3 +1785,4 @@
     </script>
 </body>
 </html>
+```
