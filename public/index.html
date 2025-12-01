@@ -488,14 +488,17 @@
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
+            // NEW BOBBY CAR
+            { id: 'car_bobby', type: 'car', price: 5000, icon: '🚘' },
             { id: 'driver_zombie', type: 'driver', price: 5000, icon: '🧟' },
             { id: 'driver_alien', type: 'driver', price: 10000, icon: '👽' },
+            { id: 'driver_sigma', type: 'driver', price: 1500, icon: '🗿' },
             { id: 'car_blue', type: 'car', price: 15000, icon: '🚙' },
             { id: 'car_gold', type: 'car', price: 50000, icon: '👑' },
             { id: 'acc_turbo', type: 'accessory', price: 20000, icon: '🚀' }
         ];
 
-        const DISPLAY_ITEMS_IDS = ['car_boat']; 
+        const DISPLAY_ITEMS_IDS = ['car_boat', 'driver_sigma', 'car_bobby']; 
 
         function saveGameData() {
             localStorage.setItem('boombob_wallet', wallet);
@@ -531,7 +534,9 @@
                 boatBan: "Tekneler karada gitmez kaptan! 🚫<br>Varsayılan arabaya geçildi.",
                 resetBtn: "VERİLERİ SIFIRLA ⚠️", resetConfirm: "Tüm ilerlemen silinecek! Emin misin?",
                 items: {
-                    'car_boat': 'Tekne', 'driver_zombie': 'Zombi Bob', 'driver_alien': 'Uzaylı', 'car_blue': 'Mavi Şimşek', 'car_gold': 'Altın Kral', 'acc_turbo': 'Turbo Motor', 'driver_default': 'Bob', 'car_default': 'Kırmızı Araba'
+                    'car_boat': 'Tekne', 'driver_zombie': 'Zombi Bob', 'driver_alien': 'Uzaylı', 'car_blue': 'Mavi Şimşek', 'car_gold': 'Altın Kral', 'acc_turbo': 'Turbo Motor', 'driver_default': 'Bob', 'car_default': 'Kırmızı Araba',
+                    'driver_sigma': 'Bob Sigma',
+                    'car_bobby': 'Bobby Car' // NEW
                 }
             },
             en: {
@@ -551,7 +556,9 @@
                 boatBan: "Boats don't go on land, captain! 🚫<br>Switched to default car.",
                 resetBtn: "RESET DATA ⚠️", resetConfirm: "All progress will be lost! Are you sure?",
                 items: {
-                    'car_boat': 'Boat', 'driver_zombie': 'Zombie Bob', 'driver_alien': 'Alien', 'car_blue': 'Blue Lightning', 'car_gold': 'Gold King', 'acc_turbo': 'Turbo Engine', 'driver_default': 'Bob', 'car_default': 'Red Car'
+                    'car_boat': 'Boat', 'driver_zombie': 'Zombie Bob', 'driver_alien': 'Alien', 'car_blue': 'Blue Lightning', 'car_gold': 'Gold King', 'acc_turbo': 'Turbo Engine', 'driver_default': 'Bob', 'car_default': 'Red Car',
+                    'driver_sigma': 'Bob Sigma',
+                    'car_bobby': 'Bobby Car' // NEW
                 }
             }
         };
@@ -678,7 +685,14 @@
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
         const boatImg = new Image(); boatImg.src = 'boat.png';
+        
+        // --- NEW BOBBY CAR IMAGE ---
+        const carBobbyImg = new Image(); carBobbyImg.src = 'car1.jpg';
+        // ---------------------------
+
         const headImg = new Image(); headImg.src = 'head.png';
+        const headSigmaImg = new Image(); headSigmaImg.src = 'head1.png';
+
         const canvas = document.getElementById('world');
         const ctx = canvas.getContext('2d');
         canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
@@ -842,10 +856,9 @@
                     else if (level === 4) { if(i % 15 > 10) { x += segmentWidth; continue; } change = Math.sin(i * 0.1) * 30; }
                     else if (level === 5) { change = 0; } 
                     else if (level === 6) { 
-                        // DÜZELTİLMİŞ MAGMA ZEMİNİ:
-                        // Frekansı düşürdük (0.4 -> 0.2) ve gürültüyü azalttık
+                        // MAGMA ZEMİNİ
                         change = Math.sin(i * 0.2) * 50 + (Math.random() - 0.5) * 20;
-                        if (i % 25 === 0) change -= 40; // Kraterler artık o kadar derin değil
+                        if (i % 25 === 0) change -= 40; 
                     }
                 }
                 const nextY = (GAME_HEIGHT * 0.7) + change; const angle = Math.atan2(nextY - y, segmentWidth);
@@ -889,7 +902,10 @@
             const chassis = Bodies.rectangle(startX, startY, 130, 40, chassisOptions);
             if(equipped.car === 'car_boat') Matter.Body.setInertia(chassis, 50000);
 
-            const wheelRadius = 18; 
+            // WHEEL SIZE LOGIC
+            let wheelRadius = 18; 
+            if (equipped.car === 'car_bobby') wheelRadius = 12; // SMALLER WHEELS
+
             const wheelOptions = { density: 0.05, friction: 3.0, restitution: 0.0, frictionStatic: 10, label: 'wheel', collisionFilter: { group: -1, category: CAT_CAR, mask: CAT_GROUND | CAT_COIN | CAT_FINISH } };
             const wheelOffset = 35; 
             
@@ -904,7 +920,11 @@
                 shockFront = Constraint.create({ ...suspensionOptions, bodyB: wheelFront, pointA: { x: wheelOffset, y: 30 } });
             }
 
-            let headOffsetY = -50; if(isBoat) headOffsetY = -70; 
+            // HEAD POSITION LOGIC
+            let headOffsetY = -50; 
+            if(isBoat) headOffsetY = -70; 
+            if(equipped.car === 'car_bobby') headOffsetY = -85; // HIGHER HEAD
+
             const headBody = Bodies.circle(startX, startY + headOffsetY, 20, { density: 0.001, friction: 0.1, restitution: 0.2, label: 'driverHead', collisionFilter: { category: CAT_DRIVER, mask: CAT_GROUND } });
             const neck = Constraint.create({ bodyA: chassis, bodyB: headBody, pointA: { x: -15, y: isBoat ? -45 : -25 }, stiffness: 0.2, damping: 0.1, length: 2 });
             
@@ -1031,14 +1051,20 @@
                     if (Math.abs(car.chassis.position.x - alienX) < 400) alienAlive = false; 
                 }
 
-                let MAX_SPEED = 0.5; if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
+                let MAX_SPEED = 0.5; 
+                if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
+                else if(equipped.car === 'car_bobby') MAX_SPEED = 1.0; // 60 KM/H for Bobby Car
+
                 if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
                 
                 let speedRaw = 0;
                 if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity);
                 else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
 
-                let displayMax = 30; if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
+                let displayMax = 30; 
+                if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
+                else if(equipped.car === 'car_bobby') displayMax = 60;
+
                 const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
                 document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
 
@@ -1090,10 +1116,25 @@
                 
                 if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
 
+                // PARTICLE GENERATION LOGIC
                 if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
-                    const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; const dirtY = car.wheelBack.position.y + 15;
-                    if(Math.random() > 0.5) particles.push({ x: dirtX, y: dirtY, vx: (Math.random() - 0.5) * 4 - 2, vy: -Math.random() * 3 - 1, life: 1.0, type: 'dirt' });
+                    const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; 
+                    const dirtY = car.wheelBack.position.y + 15;
+                    
+                    // CHOOSE PARTICLE TYPE
+                    let pType = 'dirt';
+                    if (equipped.car === 'car_bobby') pType = 'money'; // MONEY PARTICLES FOR BOBBY
+
+                    if(Math.random() > 0.5) particles.push({ 
+                        x: dirtX, 
+                        y: dirtY, 
+                        vx: (Math.random() - 0.5) * 4 - 2, 
+                        vy: -Math.random() * 3 - 1, 
+                        life: 1.0, 
+                        type: pType 
+                    });
                 }
+
                 if (Math.abs(car.chassis.velocity.x) > 1) {
                      const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
                     if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
@@ -1320,33 +1361,67 @@
 
                 particles.forEach(p => {
                     ctx.save(); ctx.globalAlpha = p.life;
-                    if(p.type === 'dirt') { ctx.fillStyle = '#5D4037'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); } 
-                    else { ctx.fillStyle = '#9CA3AF'; ctx.beginPath(); ctx.arc(p.x, p.y, 6 + (1-p.life)*5, 0, Math.PI*2); ctx.fill(); } ctx.restore();
+                    
+                    // PARTICLE DRAWING LOGIC
+                    if (p.type === 'money') {
+                        ctx.fillStyle = '#10B981'; // Money Green
+                        ctx.font = "bold 14px sans-serif";
+                        ctx.fillText("$", p.x, p.y);
+                    } 
+                    else if(p.type === 'dirt') { 
+                        ctx.fillStyle = '#5D4037'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); 
+                    } 
+                    else { 
+                        ctx.fillStyle = '#9CA3AF'; ctx.beginPath(); ctx.arc(p.x, p.y, 6 + (1-p.life)*5, 0, Math.PI*2); ctx.fill(); 
+                    } 
+                    
+                    ctx.restore();
                 });
 
                 if (car && car.chassis) {
                     const wheelRad = 18;
+                    // Draw logic updated for variable wheel size if needed visually, 
+                    // but standard drawing loop uses physics body position so it will align.
+                    // Visual wheel size:
+                    const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
+
                     if(equipped.car !== 'car_boat') { 
                          [car.wheelBack, car.wheelFront].forEach(wheel => {
                             ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
-                            ctx.beginPath(); ctx.arc(0,0,wheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
-                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,wheelRad); ctx.stroke();
-                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-wheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-wheelRad); ctx.stroke(); ctx.restore();
+                            ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
                         });
                     }
 
                     ctx.save(); ctx.translate(car.chassis.position.x, car.chassis.position.y); ctx.rotate(car.chassis.angle);
                     if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
                     
-                    const drawImg = equipped.car === 'car_boat' ? boatImg : carImg;
+                    // --- CAR DRAWING LOGIC (UPDATED) ---
+                    let drawImg = carImg;
+                    if(equipped.car === 'car_boat') drawImg = boatImg;
+                    else if(equipped.car === 'car_bobby') drawImg = carBobbyImg; 
+
                     if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
+                    // -----------------------------------
+                    
                     ctx.restore(); 
 
                     if (driverHead) {
                         ctx.save(); ctx.translate(driverHead.position.x, driverHead.position.y); ctx.rotate(car.chassis.angle); 
                         if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
-                        if (headImg.complete && headImg.naturalWidth !== 0) {
-                            ctx.drawImage(headImg, -25, -25, 50, 50); ctx.filter = 'none';
+                        
+                        let drawHead = headImg;
+                        let headXOffset = -25;
+                        
+                        if(equipped.driver === 'driver_sigma') {
+                             drawHead = headSigmaImg; 
+                             headXOffset = -15; 
+                        }
+
+                        if (drawHead.complete && drawHead.naturalWidth !== 0) {
+                            ctx.drawImage(drawHead, headXOffset, -25, 50, 50); ctx.filter = 'none';
+                            
                             let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
                             if (Math.abs(angle) > 1.0) { 
                                 document.getElementById('panic-overlay').classList.add('active'); 
