@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BooomBob! - Ultimate Edition (Boss Update)</title>
+    <title>BooomBob! - Ultimate Edition</title>
     <style>
         body {
             margin: 0;
@@ -300,48 +300,6 @@
             color: rgba(255,255,255,0.3); font-weight: bold; pointer-events: none;
         }
 
-        /* --- LEVEL 7 SPECIFICS --- */
-        #boss-hud {
-            position: absolute; top: 2rem; width: 100%; display: none; justify-content: center; gap: 50px; z-index: 55;
-        }
-        .hp-bar-container {
-            width: 300px; height: 30px; background: #374151; border: 3px solid black; border-radius: 15px; overflow: hidden; position: relative;
-        }
-        .hp-bar { height: 100%; width: 100%; transition: width 0.2s; }
-        #boss-hp { background: #EF4444; }
-        #bob-hp { background: #4ADE80; }
-        .hp-name { position: absolute; top: 0; left: 10px; font-weight: bold; color: white; text-shadow: 1px 1px 0 black; line-height: 30px; }
-
-        #dialogue-overlay {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.6); z-index: 80; display: none; flex-direction: column; justify-content: flex-end; align-items: center; padding-bottom: 50px;
-        }
-        #dialogue-box {
-            width: 80%; background: #1F2937; border: 4px solid #FACC15; padding: 20px; border-radius: 10px; color: white; font-family: 'Comic Sans MS', sans-serif; font-size: 1.5rem; position: relative;
-            cursor: pointer;
-        }
-        #dialogue-speaker { font-weight: bold; color: #FACC15; margin-bottom: 5px; text-transform: uppercase; }
-        #dialogue-text { line-height: 1.4; }
-        .tap-hint { font-size: 0.8rem; opacity: 0.7; text-align: right; margin-top: 10px; }
-
-        #fight-controls {
-            position: absolute; bottom: 2rem; right: 2rem; display: none; gap: 15px; z-index: 50;
-        }
-        .fight-btn {
-            width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; background: rgba(0,0,0,0.5); color: white; font-size: 2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; user-select: none;
-        }
-        .fight-btn:active { transform: scale(0.9); background: rgba(255,255,255,0.2); }
-        #btn-punch { background: #EF4444; }
-        #btn-kick { background: #3B82F6; }
-
-        /* Level 7 Mobil Hareket Kontrolleri */
-        #move-controls {
-            position: absolute; bottom: 2rem; left: 2rem; display: none; gap: 15px; z-index: 50;
-        }
-        .move-btn {
-            width: 70px; height: 70px; border-radius: 15px; border: 3px solid white; background: rgba(0,0,0,0.5); color: white; font-size: 2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .move-btn:active { transform: scale(0.95); background: rgba(255,255,255,0.2); }
-
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
 </head>
@@ -358,31 +316,6 @@
         <div id="dumb-message" style="font-size:3rem; color:red; border: 4px solid red; background:#000; padding:20px; border-radius:20px; font-weight:bold; color:white;">ARE U DUMB? 🌊</div>
         <div id="level3-message">NOW IT'S GETTING HARDER... 😈</div>
         <div id="tutorial-text">D - İLERİ<br>A - GERİ<br>SPACE - FREN</div>
-
-        <!-- Level 7 Elements -->
-        <div id="boss-hud">
-            <div class="hp-bar-container"><div id="bob-hp" class="hp-bar"></div><span class="hp-name">BOB</span></div>
-            <div class="hp-bar-container"><div id="boss-hp" class="hp-bar"></div><span class="hp-name">SHADOW BOSS</span></div>
-        </div>
-
-        <div id="dialogue-overlay" onclick="advanceDialogue()">
-            <div id="dialogue-box">
-                <div id="dialogue-speaker">???</div>
-                <div id="dialogue-text">...</div>
-                <div class="tap-hint">(Tıkla / Tap to continue)</div>
-            </div>
-        </div>
-
-        <div id="fight-controls">
-            <div class="fight-btn" id="btn-punch" ontouchstart="playerAttack('punch')" onmousedown="playerAttack('punch')">👊</div>
-            <div class="fight-btn" id="btn-kick" ontouchstart="playerAttack('kick')" onmousedown="playerAttack('kick')">🦶</div>
-        </div>
-
-        <div id="move-controls">
-            <div class="move-btn" ontouchstart="setMove('left')" ontouchend="setMove('stop')" onmousedown="setMove('left')" onmouseup="setMove('stop')">⬅️</div>
-            <div class="move-btn" ontouchstart="setMove('right')" ontouchend="setMove('stop')" onmousedown="setMove('right')" onmouseup="setMove('stop')">➡️</div>
-        </div>
-        <!-- End Level 7 Elements -->
 
         <button id="btn-ingame-settings" onclick="toggleInGameSettings()">⚙️</button>
         
@@ -464,10 +397,6 @@
                 <button class="level-btn" onclick="selectLevel(6)">
                     <span id="lvl-btn-6" style="color:#EF4444;">LEVEL 6: MAGMA 🌋</span>
                     <span class="level-info">300m</span>
-                </button>
-                <button class="level-btn" onclick="selectLevel(7)" style="border: 2px solid #8B5CF6;">
-                    <span id="lvl-btn-7" style="color:#8B5CF6; font-weight:bold;">LEVEL 7: BOSS SAVAŞI ⚔️</span>
-                    <span class="level-info">VS BOSS</span>
                 </button>
             </div>
             <button class="btn-back" onclick="closeScreens()" id="btn-back3">GERİ DÖN</button>
@@ -597,9 +526,9 @@
                 play: "OYNA", shop: "MAĞAZA 🛒", inventory: "ÇANTA 🎒", levels: "BÖLÜMLER 🗺️", settings: "AYARLAR ⚙️", back: "GERİ DÖN",
                 level1Name: "LEVEL 1: BEBEK ADIMLARI", level2Name: "LEVEL 2: CİDDİLEŞİYOR", level3Name: "LEVEL 3: ZOR MOD", 
                 level4Name: "LEVEL 4: AY ZIPLAMASI", level5Name: "LEVEL 5: OKYANUS",
-                level6Name: "LEVEL 6: YANARDAĞ ZİRVESİ", level7Name: "LEVEL 7: BOSS SAVAŞI ⚔️",
+                level6Name: "LEVEL 6: YANARDAĞ ZİRVESİ",
                 tutorial: "D-İLERİ  A-GERİ  SPACE-FREN  S-BURUN AŞAĞI", level3Msg: "ŞİMDİ ZORLAŞIYOR... 😈",
-                winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!", winBoss: "BOSS YOK EDİLDİ! KRALSIN 👑",
+                winTitle: "KAZANDIN!", win1: "FENA DEĞİL..", win2: "İYİ İŞ!", win3: "EFSANEVİ!",
                 gameOver: "ÖLDÜN", skillIssue: "KOLSUZLUK...", tryAgain: "TEKRAR DENE", mainMenu: "ANA MENÜ",
                 shopTitle: "MAĞAZA", inventoryTitle: "ENVANTER", levelsTitle: "BÖLÜM SEÇ", settingsTitle: "AYARLAR",
                 langLabel: "DİL / LANGUAGE", suggTitle: "ÖNERİ YAP 💡", submit: "GÖNDER", empty: "Çantan bomboş...",
@@ -620,9 +549,9 @@
                 play: "PLAY", shop: "SHOP 🛒", inventory: "INVENTORY 🎒", levels: "LEVELS 🗺️", settings: "SETTINGS ⚙️", back: "BACK",
                 level1Name: "LEVEL 1: BABY STEPS", level2Name: "LEVEL 2: GETTING SERIOUS", level3Name: "LEVEL 3: GETTING HARDER",
                 level4Name: "LEVEL 4: MOON JUMP", level5Name: "LEVEL 5: OCEAN",
-                level6Name: "LEVEL 6: MAGMA PEAK", level7Name: "LEVEL 7: BOSS FIGHT ⚔️",
+                level6Name: "LEVEL 6: MAGMA PEAK",
                 tutorial: "D-GAS  A-BACK  SPACE-BRAKE  S-NOSE DOWN", level3Msg: "NOW IT'S GETTING HARDER... 😈",
-                winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!", winBoss: "BOSS DESTROYED! YOU RULE 👑",
+                winTitle: "YOU WON!", win1: "NOT BAD..", win2: "GOOD JOB!", win3: "LEGENDARY!",
                 gameOver: "YOU DIED", skillIssue: "(skill issue...)", tryAgain: "TRY AGAIN", mainMenu: "MAIN MENU",
                 shopTitle: "SHOP", inventoryTitle: "INVENTORY", levelsTitle: "LEVEL SELECT", settingsTitle: "SETTINGS",
                 langLabel: "LANGUAGE", suggTitle: "MAKE SUGGESTION 💡", submit: "SUBMIT", empty: "Inventory is empty...",
@@ -652,7 +581,7 @@
                 'title-shop': t.shopTitle, 'title-inventory': t.inventoryTitle, 'title-levels': t.levelsTitle, 'title-settings': t.settingsTitle,
                 'lvl-btn-1': t.level1Name + " - 140m", 'lvl-btn-2': t.level2Name + " - 100m", 'lvl-btn-3': t.level3Name + " - 200m",
                 'lvl-btn-4': t.level4Name + " - 240m", 'lvl-btn-5': t.level5Name + " - 150m",
-                'lvl-btn-6': t.level6Name + " - 300m", 'lvl-btn-7': t.level7Name,
+                'lvl-btn-6': t.level6Name + " - 300m", 
                 'lbl-lang': t.langLabel, 'btn-toggle-sugg': t.suggTitle, 'btn-submit': t.submit,
                 'btn-back1': t.back, 'btn-back2': t.back, 'btn-back3': t.back, 'btn-back4': t.back,
                 'tutorial-text': t.tutorial, 'level3-message': t.level3Msg, 'txt-panic-iq': t.panic, 'txt-panic-ohno': t.ohno, 'broke-message': t.broke + "<br>😂 💸",
@@ -749,19 +678,11 @@
 
         let engine, car, driverHead;
         let coins = [], particles = [], fish = [], seagulls = [], meteors = []; 
-        let bossDrops = []; // Level 7 drops
         let gameState = 'start', score = 0, level = 1;
         let animationFrameId, cloudOffset = 0;
         let camera = { x: 0, y: 0 };
         let tutorialState = { A: false, D: false, Space: false };
         let isPaused = false;
-        let humanBob = null;
-        let bossBody = null;
-        let l7State = 'car'; // car, intro, dialogue, fight, won
-        let dialogueIndex = 0;
-        let bobHP = 100, bossHP = 100;
-        let currentWeapon = 'fist'; 
-        let moveInput = 'stop'; // left, right, stop
 
         const LEVEL_CONFIG = { 
             1: { targetDistance: 140 }, 
@@ -769,8 +690,7 @@
             3: { targetDistance: 200 }, 
             4: { targetDistance: 240 }, 
             5: { targetDistance: 150 },
-            6: { targetDistance: 300 },
-            7: { targetDistance: 50 } // Not really distance based, boss based
+            6: { targetDistance: 300 } 
         };
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
@@ -847,110 +767,29 @@
             setTimeout(() => { el.classList.remove('active'); }, 3000);
         }
 
-        // --- LEVEL 7 HELPERS ---
-        function setMove(dir) { moveInput = dir; }
-        function playerAttack(type) {
-            if(level !== 7 || l7State !== 'fight') return;
-            if(!humanBob) return;
-            
-            // Animation Trigger
-            humanBob.animState = type; 
-            humanBob.animTimer = 15; // Frames
-            
-            // Hitbox Logic
-            let range = 60; let damage = 5;
-            if(type === 'kick') { range = 80; damage = 8; }
-            if(currentWeapon === 'sword') { range = 100; damage = 15; }
-            if(currentWeapon === 'bat') { range = 80; damage = 10; }
-            if(currentWeapon === 'pan') { range = 60; damage = 20; } // High dmg short range
-
-            const hitX = humanBob.body.position.x + range;
-            if(Math.abs(hitX - bossBody.position.x) < 50 && Math.abs(humanBob.body.position.y - bossBody.position.y) < 100) {
-                bossHP -= damage;
-                showNotification(type === 'kick' ? "TEKME! 🦶" : "GÜM! 👊");
-                if(currentWeapon === 'pan') { 
-                    // Pan Sound Effect Visual
-                    particles.push({ x: bossBody.position.x, y: bossBody.position.y - 50, vx: 0, vy: -2, life: 1.0, type: 'money', color: 'white' }); // Using existing particle logic
-                }
-            }
-            updateBossUI();
-        }
-
-        function updateBossUI() {
-            document.getElementById('bob-hp').style.width = Math.max(0, bobHP) + '%';
-            document.getElementById('boss-hp').style.width = Math.max(0, bossHP) + '%';
-            if(bossHP <= 0 && l7State === 'fight') {
-                l7State = 'won';
-                gameState = 'win';
-                updateUI('win');
-            }
-            if(bobHP <= 0 && l7State === 'fight') {
-                gameState = 'gameover';
-                updateUI('gameover');
-            }
-        }
-        
-        const DIALOGUE_SCRIPT = [
-            { speaker: "BOB", text: "Sonunda buldum seni Shadow!" },
-            { speaker: "SHADOW BOSS", text: "Hahaha... Demek buraya kadar geldin küçük adam." },
-            { speaker: "BOB", text: "Paramı geri ver! Yoksa fena olacak." },
-            { speaker: "SHADOW BOSS", text: "Gel de al bakalım! SALDIRIN!" },
-            { speaker: "SYSTEM", text: "DÖVÜŞ BAŞLASIN! (Mobili için ekran butonlarını kullan)" }
-        ];
-
-        function advanceDialogue() {
-            dialogueIndex++;
-            if(dialogueIndex >= DIALOGUE_SCRIPT.length) {
-                document.getElementById('dialogue-overlay').style.display = 'none';
-                l7State = 'fight';
-                document.getElementById('fight-controls').style.display = 'flex';
-                document.getElementById('move-controls').style.display = 'flex';
-                showNotification("FIGHT! ⚔️");
-            } else {
-                updateDialogueBox();
-            }
-        }
-        function updateDialogueBox() {
-            const line = DIALOGUE_SCRIPT[dialogueIndex];
-            document.getElementById('dialogue-speaker').innerText = line.speaker;
-            document.getElementById('dialogue-text').innerText = line.text;
-            document.getElementById('dialogue-speaker').style.color = line.speaker === "BOB" ? "#4ADE80" : (line.speaker === "SYSTEM" ? "#FACC15" : "#EF4444");
-        }
-
         function updateUI(state) {
             ['start-screen','shop-screen','inventory-screen','levels-screen','settings-screen','gameover-screen','win-screen','ingame-settings-screen'].forEach(id => { document.getElementById(id).style.display = 'none'; });
             ['score-board','level-indicator','coin-counter','speedometer','tutorial-text','btn-ingame-settings','pedals-container'].forEach(id => { document.getElementById(id).style.display = 'none'; });
-            ['boss-hud', 'dialogue-overlay', 'fight-controls', 'move-controls'].forEach(id => document.getElementById(id).style.display = 'none');
-            
             document.getElementById('panic-overlay').classList.remove('active'); document.getElementById('panic-message').classList.remove('active');
             document.getElementById('level3-message').classList.remove('active'); document.getElementById('broke-message').classList.remove('active');
             document.getElementById('dumb-message').classList.remove('active');
 
             if (state === 'start') { createFloatingHeads(); document.getElementById('start-screen').style.display = 'flex'; }
             else if (state === 'playing') {
-                document.getElementById('level-indicator').style.display = 'block';
-                document.getElementById('coin-counter').style.display = 'flex';
-                document.getElementById('btn-ingame-settings').style.display = 'block';
-
-                if(level !== 7) {
-                    document.getElementById('score-board').style.display = 'block'; 
-                    document.getElementById('speedometer').style.display = 'flex';
-                    document.getElementById('pedals-container').style.display = 'flex';
-                    
-                    if (equipped.car === 'car_boat') {
-                        document.getElementById('boost-label').style.display = 'block';
-                        document.getElementById('boost-bar-container').style.display = 'block';
-                        document.getElementById('down-pedal').style.display = 'flex';
-                    } else {
-                        document.getElementById('boost-label').style.display = 'none';
-                        document.getElementById('boost-bar-container').style.display = 'none';
-                        document.getElementById('down-pedal').style.display = 'none';
-                    }
+                document.getElementById('score-board').style.display = 'block'; document.getElementById('level-indicator').style.display = 'block';
+                document.getElementById('coin-counter').style.display = 'flex'; document.getElementById('speedometer').style.display = 'flex';
+                
+                if (equipped.car === 'car_boat') {
+                    document.getElementById('boost-label').style.display = 'block';
+                    document.getElementById('boost-bar-container').style.display = 'block';
+                    document.getElementById('down-pedal').style.display = 'flex';
                 } else {
-                    // Level 7 UI
-                    document.getElementById('boss-hud').style.display = 'flex';
+                    document.getElementById('boost-label').style.display = 'none';
+                    document.getElementById('boost-bar-container').style.display = 'none';
+                    document.getElementById('down-pedal').style.display = 'none';
                 }
 
+                document.getElementById('btn-ingame-settings').style.display = 'block'; document.getElementById('pedals-container').style.display = 'flex';
                 document.getElementById('coin-value').innerText = wallet;
                 document.getElementById('level-indicator').innerText = TEXTS[currentLang]["level" + level + "Name"].split(':')[0];
                 if (level === 1 && (!tutorialState.A || !tutorialState.D || !tutorialState.Space)) document.getElementById('tutorial-text').style.display = 'block';
@@ -960,17 +799,12 @@
                 if(level === 4) bg = '#1e1b4b'; 
                 if(level === 5) bg = '#60A5FA'; 
                 if(level === 6) bg = '#2a0a0a'; 
-                if(level === 7) bg = '#4B5563'; // Dark arena
                 document.getElementById('game-container').style.backgroundColor = bg;
 
             } else if (state === 'gameover') {
                 document.getElementById('gameover-screen').style.display = 'flex'; document.getElementById('final-score').innerText = score; document.getElementById('final-coins').innerText = wallet;
             } else if (state === 'win') {
-                document.getElementById('win-screen').style.display = 'flex'; const t = TEXTS[currentLang]; 
-                let msg = t.win1; 
-                if(level === 2) msg = t.win2; 
-                if(level >= 3) msg = t.win3;
-                if(level === 7) msg = t.winBoss;
+                document.getElementById('win-screen').style.display = 'flex'; const t = TEXTS[currentLang]; let msg = t.win1; if(level === 2) msg = t.win2; if(level >= 3) msg = t.win3;
                 document.getElementById('txt-win-msg').innerText = msg; document.getElementById('win-level-text').innerText = (currentLang === 'tr' ? "LEVEL " + level + " TAMAMLANDI" : "LEVEL " + level + " COMPLETED");
             }
         }
@@ -978,20 +812,17 @@
         function startGame() { 
             if(gameState === 'playing') return;
             
-            if (level !== 5 && equipped.car === 'car_boat' && level !== 7) {
+            if (level !== 5 && equipped.car === 'car_boat') {
                 showNotification(TEXTS[currentLang].boatBan);
                 equipped.car = 'car_default';
                 saveGameData(); 
                 renderInventory();
             }
 
-            gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; meteors = []; bossDrops = [];
+            gameState = 'playing'; isPaused = false; score = 0; coins = []; particles = []; meteors = [];
             tutorialState = { A: false, D: false, Space: false }; camera = { x: 0, y: 0 }; 
             boostFuel = 100; spawnInvincibility = false; alienAlive = true; 
             krakenState = { active: false, y: 1000, msgAlpha: 0 };
-            
-            // Level 7 Init
-            l7State = 'car'; dialogueIndex = 0; bobHP = 100; bossHP = 100; currentWeapon = 'fist'; humanBob = null;
             
             if (level === 5) {
                 spawnInvincibility = true; 
@@ -1015,36 +846,6 @@
             if (engine) { Matter.World.clear(engine.world); Matter.Engine.clear(engine); } else { engine = Engine.create(); }
             engine.positionIterations = 8; engine.velocityIterations = 8; engine.gravity.y = (level === 4) ? 0.5 : 1.5;
             const world = engine.world;
-
-            // LEVEL 7 SETUP
-            if(level === 7) {
-                const arenaWidth = GAME_WIDTH;
-                const ground = Bodies.rectangle(arenaWidth/2, GAME_HEIGHT - 50, arenaWidth + 200, 100, { isStatic: true, label: 'ground' });
-                const leftWall = Bodies.rectangle(-50, GAME_HEIGHT/2, 100, GAME_HEIGHT, { isStatic: true });
-                const rightWall = Bodies.rectangle(arenaWidth+50, GAME_HEIGHT/2, 100, GAME_HEIGHT, { isStatic: true });
-                Composite.add(world, [ground, leftWall, rightWall]);
-
-                // Create Car for Intro
-                let startX = -200; 
-                const chassis = Bodies.rectangle(startX, GAME_HEIGHT - 120, 130, 40, { density: 0.004, friction: 0.5, label: 'introCar' });
-                const wheelBack = Bodies.circle(startX - 35, GAME_HEIGHT - 90, 18, { friction: 0.5 });
-                const wheelFront = Bodies.circle(startX + 35, GAME_HEIGHT - 90, 18, { friction: 0.5 });
-                
-                // Simple constraint car for intro
-                const axleB = Constraint.create({ bodyA: chassis, bodyB: wheelBack, pointA: {x: -35, y: 30}, stiffness: 0.5, length: 0 });
-                const axleF = Constraint.create({ bodyA: chassis, bodyB: wheelFront, pointA: {x: 35, y: 30}, stiffness: 0.5, length: 0 });
-                
-                car = { chassis, wheelBack, wheelFront }; // reusing car var for intro
-                Composite.add(world, [chassis, wheelBack, wheelFront, axleB, axleF]);
-                Matter.Body.setVelocity(chassis, {x: 15, y: 0}); // Initial push
-
-                // Boss Body
-                bossBody = Bodies.rectangle(GAME_WIDTH - 200, GAME_HEIGHT - 150, 80, 120, { isStatic: false, density: 0.01, friction: 1, label: 'boss' });
-                Matter.Body.setInertia(bossBody, Infinity); // No rotation
-                Composite.add(world, bossBody);
-
-                return; // Skip normal setup
-            }
 
             const CAT_CAR = 0x0002, CAT_GROUND = 0x0004, CAT_DRIVER = 0x0008, CAT_COIN = 0x0010, CAT_FINISH = 0x0020;
             const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
@@ -1179,227 +980,185 @@
             }
         }
 
-        function spawnBossDrop() {
-            const types = ['hp', 'sword', 'bat', 'pan'];
-            const type = types[Math.floor(Math.random() * types.length)];
-            const x = 50 + Math.random() * (GAME_WIDTH - 100);
-            
-            const drop = Matter.Bodies.circle(x, -50, 15, { label: 'drop', dropType: type, friction: 0.5, restitution: 0.5 });
-            bossDrops.push(drop);
-            Matter.Composite.add(engine.world, drop);
-        }
-
         function gameLoop() {
             if (gameState === 'playing' && !isPaused) {
                 Matter.Engine.update(engine, 1000 / 60);
 
-                if (level === 7) {
-                    // --- LEVEL 7 LOGIC ---
-                    if (l7State === 'car') {
-                        if (car.chassis.position.x > 200) {
-                            Matter.Body.setVelocity(car.chassis, {x: car.chassis.velocity.x * 0.9, y: car.chassis.velocity.y}); // Brake
-                            if (car.chassis.velocity.x < 0.5) {
-                                l7State = 'intro';
-                                // Create Human Bob
-                                humanBob = {
-                                    body: Matter.Bodies.rectangle(250, GAME_HEIGHT - 130, 40, 80, { inertia: Infinity, friction: 0, label: 'humanBob' }),
-                                    animState: 'idle',
-                                    animTimer: 0,
-                                    dir: 1
-                                };
-                                Matter.Composite.add(engine.world, humanBob.body);
-                                
-                                document.getElementById('dialogue-overlay').style.display = 'flex';
-                                updateDialogueBox();
-                            }
-                        }
-                    }
-                    
-                    if (l7State === 'fight') {
-                        // Spawn drops
-                        if (Math.random() < 0.005) spawnBossDrop();
-
-                        // Drop Collision
-                        const pPos = humanBob.body.position;
-                        for(let i=bossDrops.length-1; i>=0; i--) {
-                            const d = bossDrops[i];
-                            if(d.position.y > GAME_HEIGHT) { Matter.Composite.remove(engine.world, d); bossDrops.splice(i,1); continue; }
-                            
-                            // Simple dist check
-                            const dx = pPos.x - d.position.x;
-                            const dy = pPos.y - d.position.y;
-                            if(Math.sqrt(dx*dx + dy*dy) < 50) {
-                                // Pickup
-                                if(d.dropType === 'hp') { 
-                                    bobHP = Math.min(100, bobHP + 30); 
-                                    showNotification("CAN YENİLENDİ! ❤️");
-                                } else {
-                                    currentWeapon = d.dropType;
-                                    showNotification("SİLAH: " + d.dropType.toUpperCase() + " 🔥");
-                                }
-                                Matter.Composite.remove(engine.world, d);
-                                bossDrops.splice(i,1);
-                                updateBossUI();
-                            }
-                        }
-
-                        // Movement
-                        let vx = 0;
-                        if (keys['KeyD'] || moveInput === 'right') vx = 5;
-                        if (keys['KeyA'] || moveInput === 'left') vx = -5;
-                        Matter.Body.setVelocity(humanBob.body, { x: vx, y: humanBob.body.velocity.y });
+                if (level === 6 && gameState === 'playing' && !isPaused) {
+                    if (Math.random() > 0.985) { 
+                        const meteorX = car.chassis.position.x + 300 + Math.random() * 800;
+                        const meteorRad = 20 + Math.random() * 30;
                         
-                        if(vx > 0) humanBob.dir = 1; if(vx < 0) humanBob.dir = -1;
-
-                        // Bob Animation
-                        if(humanBob.animTimer > 0) humanBob.animTimer--;
-                        else humanBob.animState = 'idle';
-
-                        // Attack Input (Keyboard)
-                        if(keys['Space'] && humanBob.animState === 'idle') playerAttack('punch');
-
-                        // Boss AI
-                        const distToBob = pPos.x - bossBody.position.x;
-                        if(Math.abs(distToBob) > 100) {
-                            Matter.Body.setVelocity(bossBody, { x: distToBob > 0 ? 2 : -2, y: bossBody.velocity.y });
-                        } else {
-                            if(Math.random() < 0.02) {
-                                // Boss Attack
-                                bobHP -= 10;
-                                updateBossUI();
-                                particles.push({ x: pPos.x, y: pPos.y, vx: 0, vy: -5, life: 1, type: 'smoke' });
-                            }
-                        }
-                    }
-
-                } else {
-                    // --- NORMAL LEVEL LOGIC ---
-                    if (level === 6 && gameState === 'playing' && !isPaused) {
-                        if (Math.random() > 0.985) { 
-                            const meteorX = car.chassis.position.x + 300 + Math.random() * 800;
-                            const meteorRad = 20 + Math.random() * 30;
-                            
-                            const meteor = Matter.Bodies.circle(meteorX, -500, meteorRad, { density: 0.04, friction: 0.5, restitution: 0.2, label: 'meteor' });
-                            Matter.Body.setVelocity(meteor, { x: -5 - Math.random()*5, y: 10 });
-                            meteors.push(meteor);
-                            Matter.Composite.add(engine.world, meteor);
-                        }
-                        for (let i = meteors.length - 1; i >= 0; i--) {
-                            if (meteors[i].position.y > GAME_HEIGHT + 500) {
-                                Matter.Composite.remove(engine.world, meteors[i]);
-                                meteors.splice(i, 1);
-                            }
-                        }
-                    }
-
-                    if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
-                        document.getElementById('dumb-message').classList.add('active');
-                        setTimeout(() => { gameState = 'gameover'; updateUI('gameover'); }, 1500);
-                    } else if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
-                        Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); 
-                        if(equipped.car !== 'car_boat') {
-                            Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); 
-                            Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); 
-                        }
-                        Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); 
-                        Matter.Body.setAngularVelocity(car.chassis, 0);
-                    }
-                    
-                    if (level === 5 && equipped.car === 'car_boat') {
-                        const time = Date.now() / 1000;
-                        const points = [ { x: car.chassis.position.x - 40, offset: -40 }, { x: car.chassis.position.x + 40, offset: 40 } ];
-                        points.forEach(pt => {
-                            const waterLevel = calculateWaterHeight(pt.x, time);
-                            const pointY = car.chassis.position.y + (Math.sin(car.chassis.angle) * pt.offset);
-                            if (pointY > waterLevel) {
-                                const depth = pointY - waterLevel;
-                                Matter.Body.applyForce(car.chassis, { x: pt.x, y: pointY }, { x: 0, y: -0.003 * depth });
-                            }
+                        const meteor = Matter.Bodies.circle(meteorX, -500, meteorRad, {
+                            density: 0.04, 
+                            friction: 0.5,
+                            restitution: 0.2,
+                            label: 'meteor',
                         });
-                        Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.95 });
-                        if (keys['KeyS']) { Matter.Body.applyForce(car.chassis, { x: car.chassis.position.x + 50, y: car.chassis.position.y }, { x: 0, y: 0.005 }); }
-                        if (Math.abs(car.chassis.angle) > 2.8) { gameState = 'gameover'; updateUI('gameover'); }
-                    }
-                    
-                    if (level === 4 && alienAlive) {
-                        const alienX = 20000;
-                        if (Math.abs(car.chassis.position.x - alienX) < 400) alienAlive = false; 
+                        
+                        Matter.Body.setVelocity(meteor, { x: -5 - Math.random()*5, y: 10 });
+                        meteors.push(meteor);
+                        Matter.Composite.add(engine.world, meteor);
                     }
 
-                    let MAX_SPEED = 0.5; 
-                    if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
-                    else if(equipped.car === 'car_bobby') MAX_SPEED = 1.0; 
-
-                    if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
-                    
-                    let speedRaw = 0;
-                    if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity);
-                    else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
-
-                    let displayMax = 30; 
-                    if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
-                    else if(equipped.car === 'car_bobby') displayMax = 60;
-
-                    const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
-                    document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
-
-                    if (equipped.car === 'car_boat') {
-                        const downPedal = document.getElementById('down-pedal');
-                        if (keys['KeyS']) downPedal.classList.add('pressed'); else downPedal.classList.remove('pressed');
-
-                        if (keys['Shift'] && canBoost && boostFuel > 0) { isBoosting = true; boostFuel = Math.max(0, boostFuel - (100/300)); } else { isBoosting = false; }
-                        if (boostFuel <= 0 && canBoost) { canBoost = false; boostCooldownTimer = 300; }
-                        if (!canBoost) {
-                            boostCooldownTimer--;
-                            let pct = 100 - (boostCooldownTimer / 300 * 100);
-                            document.getElementById('boost-bar').style.width = pct + '%';
-                            if (boostCooldownTimer <= 0) { canBoost = true; boostFuel = 100; }
+                    for (let i = meteors.length - 1; i >= 0; i--) {
+                        if (meteors[i].position.y > GAME_HEIGHT + 500) {
+                            Matter.Composite.remove(engine.world, meteors[i]);
+                            meteors.splice(i, 1);
                         }
-                        const boostBar = document.getElementById('boost-bar');
-                        if(canBoost) boostBar.style.width = boostFuel + '%';
-                        boostBar.style.backgroundColor = !canBoost ? '#EF4444' : '#FACC15'; 
                     }
-
-                    const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
-                    if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
-                    if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
-
-                    if (equipped.car !== 'car_boat') {
-                        if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
-                        if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
-                        if (keys['Space']) {
-                            Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9);
-                            Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
-                            if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04);
-                        }
-                    } else { 
-                        let moveForce = 0.06; let maxBoatSpeed = 4.0; if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
-                        if (keys['KeyD'] && car.chassis.velocity.x < maxBoatSpeed) {
-                            Matter.Body.applyForce(car.chassis, car.chassis.position, { x: moveForce, y: 0 }); 
-                            if (car.chassis.angle < -0.2) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.02); }
-                        }
-                        if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.008, y: 0 });
-                    }
-                    if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
-
-                    // PARTICLES
-                    if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
-                        const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; 
-                        const dirtY = car.wheelBack.position.y + 15;
-                        let pType = 'dirt'; let pColor = null;
-                        if (equipped.trail) { pType = 'trail'; const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail); if(trailItem) pColor = trailItem.color; }
-                        else if (equipped.car === 'car_bobby') { pType = 'money'; }
-                        if(Math.random() > 0.5) particles.push({ x: dirtX, y: dirtY, vx: (Math.random() - 0.5) * 4 - 2, vy: -Math.random() * 3 - 1, life: 1.0, type: pType, color: pColor });
-                    }
-                    if (Math.abs(car.chassis.velocity.x) > 1) {
-                        const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
-                        if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
-                    }
-                    const dist = Math.floor(car.chassis.position.x / 100); if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
                 }
 
-                // COMMON PARTICLE UPDATE
+                if (level === 5 && equipped.car !== 'car_boat' && car.chassis.position.y > GAME_HEIGHT + 100) {
+                    document.getElementById('dumb-message').classList.add('active');
+                    setTimeout(() => { gameState = 'gameover'; updateUI('gameover'); }, 1500);
+                } else if (car && car.chassis.position.y > GAME_HEIGHT + 800) {
+                    Matter.Body.setPosition(car.chassis, { x: 200, y: GAME_HEIGHT * 0.5 }); 
+                    if(equipped.car !== 'car_boat') {
+                        Matter.Body.setPosition(car.wheelBack, { x: 200 - 40, y: GAME_HEIGHT * 0.5 + 30 }); 
+                        Matter.Body.setPosition(car.wheelFront, { x: 200 + 40, y: GAME_HEIGHT * 0.5 + 30 }); 
+                    }
+                    Matter.Body.setVelocity(car.chassis, { x: 0, y: 0 }); 
+                    Matter.Body.setAngularVelocity(car.chassis, 0);
+                }
+                
+                if (level === 5 && equipped.car === 'car_boat') {
+                    const time = Date.now() / 1000;
+                    
+                    const points = [
+                        { x: car.chassis.position.x - 40, offset: -40 },
+                        { x: car.chassis.position.x + 40, offset: 40 }
+                    ];
+
+                    points.forEach(pt => {
+                        const waterLevel = calculateWaterHeight(pt.x, time);
+                        const pointY = car.chassis.position.y + (Math.sin(car.chassis.angle) * pt.offset);
+
+                        if (pointY > waterLevel) {
+                            const depth = pointY - waterLevel;
+                            Matter.Body.applyForce(car.chassis, { x: pt.x, y: pointY }, { x: 0, y: -0.003 * depth });
+                        }
+                    });
+
+                    Matter.Body.setVelocity(car.chassis, { x: car.chassis.velocity.x * 0.99, y: car.chassis.velocity.y * 0.95 });
+                    
+                    if (keys['KeyS']) {
+                        Matter.Body.applyForce(car.chassis, { x: car.chassis.position.x + 50, y: car.chassis.position.y }, { x: 0, y: 0.005 });
+                    }
+
+                    if (Math.abs(car.chassis.angle) > 2.8) { 
+                        gameState = 'gameover';
+                        updateUI('gameover');
+                    }
+                }
+                
+                if (level === 4 && alienAlive) {
+                    const alienX = 20000;
+                    if (Math.abs(car.chassis.position.x - alienX) < 400) alienAlive = false; 
+                }
+
+                let MAX_SPEED = 0.5; 
+                if(level === 5 && equipped.car === 'car_boat') MAX_SPEED = 0.85;
+                else if(equipped.car === 'car_bobby') MAX_SPEED = 1.0; // 60 KM/H for Bobby Car
+
+                if (car && car.chassis) { camera.x = -car.chassis.position.x + GAME_WIDTH * 0.3; camera.y = -car.chassis.position.y + GAME_HEIGHT * 0.6; }
+                
+                let speedRaw = 0;
+                if(equipped.car !== 'car_boat') speedRaw = Math.abs(car.wheelBack.angularVelocity);
+                else speedRaw = Math.abs(car.chassis.velocity.x) * 0.1;
+
+                let displayMax = 30; 
+                if(level === 5 && equipped.car === 'car_boat') displayMax = 50;
+                else if(equipped.car === 'car_bobby') displayMax = 60;
+
+                const displaySpeed = Math.min(Math.round(speedRaw * 60), displayMax);
+                document.getElementById('speed-value').innerText = displaySpeed; document.getElementById('speed-bar').style.width = Math.min((displaySpeed / displayMax) * 100, 100) + '%';
+
+                if (equipped.car === 'car_boat') {
+                    const downPedal = document.getElementById('down-pedal');
+                    if (keys['KeyS']) downPedal.classList.add('pressed'); else downPedal.classList.remove('pressed');
+
+                    if (keys['Shift'] && canBoost && boostFuel > 0) {
+                        isBoosting = true; boostFuel = Math.max(0, boostFuel - (100/300)); 
+                    } else { isBoosting = false; }
+
+                    if (boostFuel <= 0 && canBoost) { canBoost = false; boostCooldownTimer = 300; }
+                    if (!canBoost) {
+                        boostCooldownTimer--;
+                        let pct = 100 - (boostCooldownTimer / 300 * 100);
+                        document.getElementById('boost-bar').style.width = pct + '%';
+                        if (boostCooldownTimer <= 0) { canBoost = true; boostFuel = 100; }
+                    }
+                    const boostBar = document.getElementById('boost-bar');
+                    if(canBoost) boostBar.style.width = boostFuel + '%';
+                    boostBar.style.backgroundColor = !canBoost ? '#EF4444' : '#FACC15'; 
+                }
+
+                const gasPedal = document.getElementById('gas-pedal'); const brakePedal = document.getElementById('brake-pedal');
+                if (keys['KeyD']) gasPedal.classList.add('pressed'); else gasPedal.classList.remove('pressed');
+                if (keys['Space']) brakePedal.classList.add('pressed'); else brakePedal.classList.remove('pressed');
+
+                if (equipped.car !== 'car_boat') {
+                    if (keys['KeyD'] && car.wheelBack.angularVelocity < MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity + acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity + acc); }
+                    if (keys['KeyA'] && car.wheelBack.angularVelocity > -MAX_SPEED) { const acc = 0.015; Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity - acc); Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity - acc); }
+                    if (keys['Space']) {
+                        Matter.Body.setAngularVelocity(car.wheelBack, car.wheelBack.angularVelocity * 0.9);
+                        Matter.Body.setAngularVelocity(car.wheelFront, car.wheelFront.angularVelocity * 0.9);
+                        if(Math.abs(car.wheelBack.angularVelocity) > 0.2) Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.04);
+                    }
+                } else { 
+                     let moveForce = 0.06; 
+                     let maxBoatSpeed = 4.0; 
+                     if(isBoosting) { moveForce *= 2; maxBoatSpeed *= 2; }
+
+                     if (keys['KeyD'] && car.chassis.velocity.x < maxBoatSpeed) {
+                         Matter.Body.applyForce(car.chassis, car.chassis.position, { x: moveForce, y: 0 }); 
+                         if (car.chassis.angle < -0.2) { 
+                             Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity + 0.02);
+                         }
+                     }
+                     if (keys['KeyA']) Matter.Body.applyForce(car.chassis, car.chassis.position, { x: -0.008, y: 0 });
+                }
+                
+                if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
+
+                // PARTICLE GENERATION LOGIC (UPDATED WITH TRAILS)
+                if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
+                    const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; 
+                    const dirtY = car.wheelBack.position.y + 15;
+                    
+                    let pType = 'dirt';
+                    let pColor = null;
+
+                    // PRIORITY 1: EQUIPPED TRAIL
+                    if (equipped.trail) {
+                        pType = 'trail';
+                        const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail);
+                        if(trailItem) pColor = trailItem.color;
+                    }
+                    // PRIORITY 2: CAR SPECIAL EFFECTS
+                    else if (equipped.car === 'car_bobby') {
+                        pType = 'money';
+                    }
+
+                    if(Math.random() > 0.5) particles.push({ 
+                        x: dirtX, 
+                        y: dirtY, 
+                        vx: (Math.random() - 0.5) * 4 - 2, 
+                        vy: -Math.random() * 3 - 1, 
+                        life: 1.0, 
+                        type: pType,
+                        color: pColor
+                    });
+                }
+
+                if (Math.abs(car.chassis.velocity.x) > 1) {
+                     const smokeX = car.chassis.position.x - Math.cos(car.chassis.angle) * 60; const smokeY = car.chassis.position.y - Math.sin(car.chassis.angle) * 20;
+                    if(Math.random() > 0.7) particles.push({ x: smokeX, y: smokeY, vx: -2 - Math.random(), vy: -1 + Math.random(), life: 1.0, type: 'smoke' });
+                }
+
                 for (let i = particles.length - 1; i >= 0; i--) { let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; if (p.life <= 0) particles.splice(i, 1); }
+                const dist = Math.floor(car.chassis.position.x / 100); if (dist > score) { score = dist; document.getElementById('score-board').innerText = `DIST: ${score}m`; }
             }
             draw();
             if (gameState !== 'stop') animationFrameId = requestAnimationFrame(gameLoop);
@@ -1407,278 +1166,296 @@
 
         function draw() {
             ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.save();
+            ctx.translate(camera.x, camera.y);
             
-            if (level === 7) {
-                // Fixed Camera for Boss Room
-                ctx.translate(0, 0); 
+            let bgColor = '#87CEEB';
+            if (level === 4) bgColor = '#1e1b4b';
+            if (level === 5) bgColor = '#60A5FA';
+            if (level === 6) bgColor = '#2a0a0a';
+            
+            ctx.fillStyle = bgColor;
+            ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
+            
+            if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
+            
+            if (level === 5 && car.chassis.position.x > (LEVEL_CONFIG[5].targetDistance * 100) - 5000) {
+                drawRain(ctx);
+            }
+
+            const time = Date.now() / 1000;
+            
+            if (level === 6) {
+                ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
+                for(let i=0; i<50; i++) {
+                    const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200));
+                    const ay = -camera.y + ((i * 243 + time * 200) % (GAME_HEIGHT + 200));
+                    ctx.fillRect(ax, ay, 4, 4);
+                }
                 
-                // Draw Background
-                ctx.fillStyle = '#111827';
-                ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-                
-                // Draw Drops
-                bossDrops.forEach(d => {
-                    ctx.save(); ctx.translate(d.position.x, d.position.y);
-                    ctx.font = "20px Arial"; ctx.textAlign="center";
-                    let icon = '❓';
-                    if(d.dropType === 'hp') icon = '🧪';
-                    if(d.dropType === 'sword') icon = '🗡️';
-                    if(d.dropType === 'bat') icon = '🏏';
-                    if(d.dropType === 'pan') icon = '🍳';
-                    ctx.fillText(icon, 0, 5);
-                    ctx.beginPath(); ctx.arc(0,0,15,0,Math.PI*2); ctx.strokeStyle='white'; ctx.stroke();
-                    ctx.restore();
-                });
-
-                // Draw Ground
-                ctx.fillStyle = '#374151';
-                ctx.fillRect(0, GAME_HEIGHT - 100, GAME_WIDTH, 100);
-
-                // Draw Car (Intro)
-                ctx.save();
-                ctx.translate(car.chassis.position.x, car.chassis.position.y);
-                ctx.rotate(car.chassis.angle);
-                if (carImg.complete) ctx.drawImage(carImg, -65, -30, 130, 60);
-                ctx.restore();
-                [car.wheelBack, car.wheelFront].forEach(w => {
-                    ctx.beginPath(); ctx.arc(w.position.x, w.position.y, 18, 0, Math.PI*2); ctx.fillStyle='#000'; ctx.fill();
-                });
-
-                // Draw Boss
-                ctx.save();
-                ctx.translate(bossBody.position.x, bossBody.position.y);
-                ctx.fillStyle = 'black';
-                ctx.fillRect(-40, -60, 80, 120);
-                // Red Eyes
-                ctx.fillStyle = 'red';
-                ctx.beginPath(); ctx.arc(-15, -30, 5, 0, Math.PI*2); ctx.fill();
-                ctx.beginPath(); ctx.arc(15, -30, 5, 0, Math.PI*2); ctx.fill();
-                ctx.shadowBlur = 20; ctx.shadowColor = 'purple';
-                ctx.fillRect(-40, -60, 80, 120); // Aura
-                ctx.shadowBlur = 0;
-                ctx.restore();
-
-                // Draw Human Bob
-                if (humanBob) {
+                meteors.forEach(m => {
                     ctx.save();
-                    ctx.translate(humanBob.body.position.x, humanBob.body.position.y);
-                    ctx.scale(humanBob.dir, 1);
+                    ctx.translate(m.position.x, m.position.y);
+                    ctx.rotate(m.angle);
                     
-                    // Body
-                    ctx.fillStyle = (equipped.driver === 'driver_sigma') ? 'black' : '#3B82F6';
-                    ctx.fillRect(-15, -30, 30, 50); 
+                    ctx.beginPath();
+                    ctx.arc(0, 0, m.circleRadius, 0, Math.PI * 2);
+                    ctx.fillStyle = '#451a03'; 
+                    ctx.fill();
                     
-                    // Head
-                    let hImg = headImg; if(equipped.driver === 'driver_sigma') hImg = headSigmaImg;
-                    if(hImg.complete) ctx.drawImage(hImg, -20, -55, 40, 40);
-
-                    // Arms & Legs (Animation)
-                    ctx.strokeStyle = '#FCD34D'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, m.circleRadius * 0.7, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ef4444'; 
+                    ctx.fill();
                     
-                    if (humanBob.animState === 'punch') {
-                        // Luffy Punch
-                        ctx.beginPath(); ctx.moveTo(10, -15); ctx.lineTo(60, -15); ctx.stroke();
-                        // Fist
-                        ctx.fillStyle = '#FCD34D'; ctx.beginPath(); ctx.arc(65, -15, 12, 0, Math.PI*2); ctx.fill();
-                        
-                        // Weapon?
-                        if(currentWeapon !== 'fist') {
-                            ctx.font = "30px Arial"; ctx.fillText(currentWeapon === 'sword' ? '🗡️' : (currentWeapon === 'bat' ? '🏏' : '🍳'), 70, -10);
-                        }
-                    } else if (humanBob.animState === 'kick') {
-                        // High Kick
-                        ctx.beginPath(); ctx.moveTo(10, 10); ctx.lineTo(50, -20); ctx.stroke();
-                        // Normal Leg
-                        ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(-10, 40); ctx.stroke();
-                        // Body Lean
-                         ctx.rotate(-0.2);
-                    } else {
-                        // Idle
-                        ctx.beginPath(); ctx.moveTo(10, -15); ctx.lineTo(20, 10); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(-5, 10); ctx.lineTo(-10, 40); ctx.stroke();
-                        ctx.beginPath(); ctx.moveTo(5, 10); ctx.lineTo(10, 40); ctx.stroke();
-                        
-                        if(currentWeapon !== 'fist') {
-                            ctx.font = "20px Arial"; ctx.fillText(currentWeapon === 'sword' ? '🗡️' : (currentWeapon === 'bat' ? '🏏' : '🍳'), 20, 10);
-                        }
-                    }
-
+                    ctx.globalAlpha = 0.6;
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.beginPath();
+                    ctx.arc(-m.circleRadius, -m.circleRadius, m.circleRadius, 0, Math.PI*2);
+                    ctx.fill();
+                    
                     ctx.restore();
+                });
+            }
+
+            if(level === 5) { 
+                for(let i=0; i<5; i++) { 
+                    const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200); 
+                    const uy = -camera.y + 100 + Math.sin(time + i) * 50; 
+                    ctx.font = "40px Arial"; ctx.fillText("🐦", ux, uy); 
+                } 
+                for(let i=0; i<15; i++) { 
+                    let speed = (time * 100) + (i * 50);
+                    let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
+                    if(fx < -50) fx += (GAME_WIDTH + 800);
+                    
+                    const waterH = calculateWaterHeight(fx, time);
+                    const fy = waterH + 80;
+
+                    ctx.save();
+                    ctx.translate(fx, fy);
+                    ctx.scale(i % 2 === 0 ? 1 : -1, 1); 
+                    ctx.font = "40px Arial";
+                    ctx.fillStyle = "#A855F7";
+                    ctx.fillText("🐟", 0, 0);
+                    ctx.restore();
+                } 
+            }
+            else if (level === 4) {
+                for(let i=0; i<5; i++) { 
+                    const ux = -camera.x + (i * 400 + time * 80) % (GAME_WIDTH + 400); 
+                    const uy = -camera.y + 50 + Math.sin(time * 2 + i) * 30; 
+                    ctx.font = "50px Arial"; ctx.fillText("🛸", ux, uy); 
+                }
+            }
+
+            if (engine) {
+                const bodies = Matter.Composite.allBodies(engine.world);
+                const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
+                const finishX = config.targetDistance * 100;
+                
+                ctx.save(); ctx.translate(finishX, 400); 
+                for(let i=0; i<10; i++) { ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#000000'; ctx.fillRect(-10, 0, 40, 20); }
+                ctx.fillStyle = '#C0C0C0'; ctx.fillRect(20, -200, 5, 200);
+                ctx.fillStyle = level === 3 ? '#FFD700' : (level === 2 ? '#3B82F6' : '#EF4444');
+                ctx.beginPath(); ctx.moveTo(25, -200); ctx.lineTo(80, -180); ctx.lineTo(25, -160); ctx.fill();
+                for(let r=0; r<2; r++) for(let c=0; c<3; c++) { ctx.fillStyle = (r+c)%2===0?'black':'white'; ctx.fillRect(25+c*10, -160+r*10, 10, 10); }
+                ctx.fillStyle = "#FACC15"; ctx.font = "bold 30px sans-serif"; ctx.fillText("FINISH", 0, -220); ctx.restore();
+
+                if (level === 4 && alienAlive) {
+                    const alienX = 20000;
+                    const alienY = 300; 
+                    ctx.save(); ctx.translate(alienX, alienY); ctx.font = "100px Arial"; ctx.fillText("👽", 0, 0); ctx.restore();
+                    const screenAlienX = alienX + camera.x;
+                    if (screenAlienX > -100 && screenAlienX < GAME_WIDTH + 100) {
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'saturation';
+                        ctx.fillStyle = "hsl(0,0%,50%)"; ctx.fillRect(-camera.x, -camera.y, GAME_WIDTH*2, GAME_HEIGHT*2);
+                        ctx.globalCompositeOperation = 'source-over';
+                        for(let i=0; i<20; i++) {
+                            const barH = Math.random() * 50; const barY = -camera.y + Math.random() * GAME_HEIGHT;
+                            ctx.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)';
+                            ctx.fillRect(-camera.x - 100, barY, GAME_WIDTH + 200, barH);
+                        }
+                        const shakeX = (Math.random() - 0.5) * 20; const shakeY = (Math.random() - 0.5) * 20;
+                        ctx.translate(shakeX, shakeY);
+                        ctx.restore();
+                    }
                 }
 
-                // Particles (Boss Fight)
-                particles.forEach(p => {
-                    ctx.save(); ctx.globalAlpha = p.life;
-                    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
-                    ctx.restore();
-                });
-
-            } else {
-                // --- NORMAL DRAWING ---
-                ctx.translate(camera.x, camera.y);
-                
-                let bgColor = '#87CEEB';
-                if (level === 4) bgColor = '#1e1b4b';
-                if (level === 5) bgColor = '#60A5FA';
-                if (level === 6) bgColor = '#2a0a0a';
-                
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(-camera.x - 100, -camera.y - 100, GAME_WIDTH + 200, GAME_HEIGHT + 200);
-                
-                if (gameState === 'playing' && !isPaused) cloudOffset += 0.5; drawClouds(ctx, -camera.x * 0.5 - cloudOffset, -camera.y * 0.1); 
-                
-                if (level === 5 && car.chassis.position.x > (LEVEL_CONFIG[5].targetDistance * 100) - 5000) { drawRain(ctx); }
-
-                const time = Date.now() / 1000;
-                
-                if (level === 6) {
-                    ctx.fillStyle = 'rgba(100, 100, 100, 0.5)';
-                    for(let i=0; i<50; i++) {
-                        const ax = -camera.x + ((i * 137 + time * 100) % (GAME_WIDTH + 200));
-                        const ay = -camera.y + ((i * 243 + time * 200) % (GAME_HEIGHT + 200));
-                        ctx.fillRect(ax, ay, 4, 4);
+                if (level === 5) {
+                    const baseHeight = GAME_HEIGHT * 0.7;
+                    const screenStart = -camera.x - 100;
+                    const screenEnd = -camera.x + GAME_WIDTH + 100;
+                    
+                    ctx.fillStyle = '#1e3a8a'; 
+                    ctx.beginPath();
+                    ctx.moveTo(screenStart, GAME_HEIGHT + 200);
+                    for (let x = screenStart; x <= screenEnd; x += 30) {
+                        const y = calculateWaterHeight(x, time);
+                        ctx.lineTo(x, y);
                     }
-                    meteors.forEach(m => {
-                        ctx.save(); ctx.translate(m.position.x, m.position.y); ctx.rotate(m.angle);
-                        ctx.beginPath(); ctx.arc(0, 0, m.circleRadius, 0, Math.PI * 2); ctx.fillStyle = '#451a03'; ctx.fill();
-                        ctx.beginPath(); ctx.arc(0, 0, m.circleRadius * 0.7, 0, Math.PI * 2); ctx.fillStyle = '#ef4444'; ctx.fill();
+                    ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
+                    ctx.fill();
+
+                    if (krakenState.active) {
+                        ctx.save();
+                        ctx.translate(8000, krakenState.y); 
+                        ctx.font = "200px Arial";
+                        ctx.fillText("🐙", 0, 0);
+                        
+                        ctx.font = "bold 40px Comic Sans MS";
+                        ctx.fillStyle = "white";
+                        ctx.strokeStyle = "black";
+                        ctx.lineWidth = 4;
+                        ctx.strokeText("Naber, captain?", -100, -150);
+                        ctx.fillText("Naber, captain?", -100, -150);
                         ctx.restore();
+                    }
+
+                    ctx.fillStyle = 'rgba(147, 197, 253, 0.6)';
+                    ctx.beginPath();
+                    ctx.moveTo(screenStart, GAME_HEIGHT + 200);
+                    for (let x = screenStart; x <= screenEnd; x += 15) {
+                        const y = calculateWaterHeight(x, time) + 10; 
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.lineTo(screenEnd, GAME_HEIGHT + 200);
+                    ctx.fill();
+                    
+                    for(let i=0; i<15; i++) { 
+                        let speed = (time * 100) + (i * 50);
+                        let fx = -camera.x + ((i * 300 + time * 50) % (GAME_WIDTH + 800));
+                        if(fx < -50) fx += (GAME_WIDTH + 800);
+                        
+                        const waveHeightAtFishX = calculateWaterHeight(fx, time);
+                        const fy = waveHeightAtFishX + 80;
+
+                        ctx.save();
+                        ctx.translate(fx, fy);
+                        ctx.scale(i % 2 === 0 ? 1 : -1, 1);
+                        ctx.font = "40px Arial";
+                        ctx.fillStyle = "#A855F7";
+                        ctx.fillText("🐟", 0, 0);
+                        ctx.restore();
+                    }
+                } else {
+                    bodies.forEach(body => {
+                        if (body.label === 'ground') {
+                            ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 600); 
+                            
+                            if (level === 6) ctx.fillStyle = '#1f1f1f'; 
+                            else ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; 
+                            ctx.fill();
+                            
+                            ctx.beginPath(); ctx.rect(-70, -300, 140, 20); 
+                            
+                            if (level === 6) ctx.fillStyle = '#7f1d1d';
+                            else ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); 
+                            ctx.fill();
+
+                            ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); 
+                            ctx.restore();
+                        }
                     });
                 }
 
-                if(level === 5) { 
-                    for(let i=0; i<5; i++) { 
-                        const ux = -camera.x + (i * 300 + time * 50) % (GAME_WIDTH + 200); 
-                        const uy = -camera.y + 100 + Math.sin(time + i) * 50; 
-                        ctx.font = "40px Arial"; ctx.fillText("🐦", ux, uy); 
-                    } 
-                    for(let i=0; i<15; i++) { 
-                        let speed = (time * 100) + (i * 50);
-                        let fx = -camera.x + ((i * 300 - speed) % (GAME_WIDTH + 1000));
-                        if(fx < -50) fx += (GAME_WIDTH + 800);
-                        const waterH = calculateWaterHeight(fx, time); const fy = waterH + 80;
-                        ctx.save(); ctx.translate(fx, fy); ctx.scale(i % 2 === 0 ? 1 : -1, 1); ctx.font = "40px Arial"; ctx.fillStyle = "#A855F7"; ctx.fillText("🐟", 0, 0); ctx.restore();
-                    } 
-                }
-                else if (level === 4) {
-                    for(let i=0; i<5; i++) { 
-                        const ux = -camera.x + (i * 400 + time * 80) % (GAME_WIDTH + 400); 
-                        const uy = -camera.y + 50 + Math.sin(time * 2 + i) * 30; 
-                        ctx.font = "50px Arial"; ctx.fillText("🛸", ux, uy); 
+                bodies.forEach(body => {
+                    if (body.label === 'coin' && !body.isCollected) {
+                        ctx.save(); ctx.translate(body.position.x, body.position.y);
+                        if(level === 5) {
+                            const floatY = calculateWaterHeight(body.position.x, time) - 30;
+                            Matter.Body.setPosition(body, { x: body.position.x, y: floatY });
+                        }
+                        
+                        const value = body.coinValue || 1; const scaleX = Math.sin(Date.now()/200); 
+                        ctx.scale(scaleX, 1); ctx.beginPath(); const radius = value === 10 ? 18 : 14; ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                        if (value === 10) { ctx.fillStyle = '#FFD700'; ctx.strokeStyle = '#B8860B'; } else { ctx.fillStyle = '#C0C0C0'; ctx.strokeStyle = '#808080'; }
+                        ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
+                        ctx.fillStyle = value === 10 ? '#B8860B' : '#696969'; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(value, 0, 1); ctx.restore();
                     }
-                }
+                });
 
-                if (engine) {
-                    const bodies = Matter.Composite.allBodies(engine.world);
-                    const config = LEVEL_CONFIG[level] || LEVEL_CONFIG[1];
-                    const finishX = config.targetDistance * 100;
+                particles.forEach(p => {
+                    ctx.save(); ctx.globalAlpha = p.life;
                     
-                    ctx.save(); ctx.translate(finishX, 400); 
-                    for(let i=0; i<10; i++) { ctx.fillStyle = i%2===0 ? '#FFFFFF' : '#000000'; ctx.fillRect(-10, 0, 40, 20); }
-                    ctx.fillStyle = '#C0C0C0'; ctx.fillRect(20, -200, 5, 200);
-                    ctx.fillStyle = level === 3 ? '#FFD700' : (level === 2 ? '#3B82F6' : '#EF4444');
-                    ctx.beginPath(); ctx.moveTo(25, -200); ctx.lineTo(80, -180); ctx.lineTo(25, -160); ctx.fill();
-                    for(let r=0; r<2; r++) for(let c=0; c<3; c++) { ctx.fillStyle = (r+c)%2===0?'black':'white'; ctx.fillRect(25+c*10, -160+r*10, 10, 10); }
-                    ctx.fillStyle = "#FACC15"; ctx.font = "bold 30px sans-serif"; ctx.fillText("FINISH", 0, -220); ctx.restore();
-
-                    if (level === 4 && alienAlive) {
-                        const alienX = 20000;
-                        const alienY = 300; 
-                        ctx.save(); ctx.translate(alienX, alienY); ctx.font = "100px Arial"; ctx.fillText("👽", 0, 0); ctx.restore();
+                    // PARTICLE DRAWING LOGIC (UPDATED)
+                    if (p.type === 'money') {
+                        ctx.fillStyle = '#10B981'; // Money Green
+                        ctx.font = "bold 14px sans-serif";
+                        ctx.fillText("$", p.x, p.y);
+                    } 
+                    else if (p.type === 'trail') {
+                        if(p.color === 'rainbow') {
+                            const hue = (Date.now() / 5) % 360;
+                            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                        } else {
+                            ctx.fillStyle = p.color;
+                        }
+                        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
                     }
+                    else if(p.type === 'dirt') { 
+                        ctx.fillStyle = '#5D4037'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); 
+                    } 
+                    else { 
+                        ctx.fillStyle = '#9CA3AF'; ctx.beginPath(); ctx.arc(p.x, p.y, 6 + (1-p.life)*5, 0, Math.PI*2); ctx.fill(); 
+                    } 
+                    
+                    ctx.restore();
+                });
 
-                    if (level === 5) {
-                        const baseHeight = GAME_HEIGHT * 0.7;
-                        const screenStart = -camera.x - 100;
-                        const screenEnd = -camera.x + GAME_WIDTH + 100;
-                        ctx.fillStyle = '#1e3a8a'; ctx.beginPath(); ctx.moveTo(screenStart, GAME_HEIGHT + 200);
-                        for (let x = screenStart; x <= screenEnd; x += 30) { const y = calculateWaterHeight(x, time); ctx.lineTo(x, y); }
-                        ctx.lineTo(screenEnd, GAME_HEIGHT + 200); ctx.fill();
-                        ctx.fillStyle = 'rgba(147, 197, 253, 0.6)'; ctx.beginPath(); ctx.moveTo(screenStart, GAME_HEIGHT + 200);
-                        for (let x = screenStart; x <= screenEnd; x += 15) { const y = calculateWaterHeight(x, time) + 10; ctx.lineTo(x, y); }
-                        ctx.lineTo(screenEnd, GAME_HEIGHT + 200); ctx.fill();
-                    } else {
-                        bodies.forEach(body => {
-                            if (body.label === 'ground') {
-                                ctx.save(); ctx.translate(body.position.x, body.position.y); ctx.rotate(body.angle);
-                                ctx.beginPath(); ctx.rect(-70, -300, 140, 600); 
-                                if (level === 6) ctx.fillStyle = '#1f1f1f'; 
-                                else ctx.fillStyle = level === 5 ? '#1d4ed8' : '#5D4037'; 
-                                ctx.fill();
-                                ctx.beginPath(); ctx.rect(-70, -300, 140, 20); 
-                                if (level === 6) ctx.fillStyle = '#7f1d1d';
-                                else ctx.fillStyle = level === 5 ? '#60a5fa' : (level === 4 ? '#94a3b8' : '#4CAF50'); 
-                                ctx.fill();
-                                ctx.beginPath(); ctx.moveTo(-70, -300); ctx.lineTo(70, -300); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 3; ctx.stroke(); 
-                                ctx.restore();
-                            }
+                if (car && car.chassis) {
+                    const wheelRad = 18;
+                    // Visual wheel size:
+                    const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
+
+                    if(equipped.car !== 'car_boat') { 
+                         [car.wheelBack, car.wheelFront].forEach(wheel => {
+                            ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
+                            ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
+                            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
                         });
                     }
 
-                    bodies.forEach(body => {
-                        if (body.label === 'coin' && !body.isCollected) {
-                            ctx.save(); ctx.translate(body.position.x, body.position.y);
-                            if(level === 5) { const floatY = calculateWaterHeight(body.position.x, time) - 30; Matter.Body.setPosition(body, { x: body.position.x, y: floatY }); }
-                            const value = body.coinValue || 1; const scaleX = Math.sin(Date.now()/200); 
-                            ctx.scale(scaleX, 1); ctx.beginPath(); const radius = value === 10 ? 18 : 14; ctx.arc(0, 0, radius, 0, Math.PI * 2);
-                            if (value === 10) { ctx.fillStyle = '#FFD700'; ctx.strokeStyle = '#B8860B'; } else { ctx.fillStyle = '#C0C0C0'; ctx.strokeStyle = '#808080'; }
-                            ctx.fill(); ctx.lineWidth = 2; ctx.stroke();
-                            ctx.fillStyle = value === 10 ? '#B8860B' : '#696969'; ctx.font = "bold 16px sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(value, 0, 1); ctx.restore();
-                        }
-                    });
+                    ctx.save(); ctx.translate(car.chassis.position.x, car.chassis.position.y); ctx.rotate(car.chassis.angle);
+                    if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
+                    
+                    // --- CAR DRAWING LOGIC (UPDATED) ---
+                    let drawImg = carImg;
+                    if(equipped.car === 'car_boat') drawImg = boatImg;
+                    else if(equipped.car === 'car_bobby') drawImg = carBobbyImg; 
 
-                    particles.forEach(p => {
-                        ctx.save(); ctx.globalAlpha = p.life;
-                        if (p.type === 'money') { ctx.fillStyle = '#10B981'; ctx.font = "bold 14px sans-serif"; ctx.fillText("$", p.x, p.y); } 
-                        else if (p.type === 'trail') {
-                            if(p.color === 'rainbow') { const hue = (Date.now() / 5) % 360; ctx.fillStyle = `hsl(${hue}, 100%, 50%)`; } else { ctx.fillStyle = p.color; }
-                            ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
-                        }
-                        else if(p.type === 'dirt') { ctx.fillStyle = '#5D4037'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); } 
-                        else { ctx.fillStyle = '#9CA3AF'; ctx.beginPath(); ctx.arc(p.x, p.y, 6 + (1-p.life)*5, 0, Math.PI*2); ctx.fill(); } 
-                        ctx.restore();
-                    });
+                    if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
+                    // -----------------------------------
+                    
+                    ctx.restore(); 
 
-                    if (car && car.chassis) {
-                        const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
-                        if(equipped.car !== 'car_boat') { 
-                            [car.wheelBack, car.wheelFront].forEach(wheel => {
-                                ctx.save(); ctx.translate(wheel.position.x, wheel.position.y); ctx.rotate(wheel.angle);
-                                ctx.beginPath(); ctx.arc(0,0,drawWheelRad,0,Math.PI*2); ctx.fillStyle='#111'; ctx.fill(); ctx.strokeStyle='#888'; ctx.lineWidth=3;
-                                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,drawWheelRad); ctx.stroke();
-                                ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-drawWheelRad,0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0,-drawWheelRad); ctx.stroke(); ctx.restore();
-                            });
-                        }
-
-                        ctx.save(); ctx.translate(car.chassis.position.x, car.chassis.position.y); ctx.rotate(car.chassis.angle);
-                        if(equipped.car === 'car_blue') ctx.filter = 'hue-rotate(200deg)'; else if(equipped.car === 'car_gold') ctx.filter = 'hue-rotate(45deg) brightness(1.5)';
+                    if (driverHead) {
+                        ctx.save(); ctx.translate(driverHead.position.x, driverHead.position.y); ctx.rotate(car.chassis.angle); 
+                        if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
                         
-                        let drawImg = carImg;
-                        if(equipped.car === 'car_boat') drawImg = boatImg;
-                        else if(equipped.car === 'car_bobby') drawImg = carBobbyImg; 
-
-                        if (drawImg.complete && drawImg.naturalWidth !== 0) { ctx.drawImage(drawImg, -65, -30, 130, 60); } else { ctx.fillStyle='red'; ctx.fillRect(-65,-20,130,40); } 
-                        ctx.restore(); 
-
-                        if (driverHead) {
-                            ctx.save(); ctx.translate(driverHead.position.x, driverHead.position.y); ctx.rotate(car.chassis.angle); 
-                            if(equipped.driver === 'driver_zombie') ctx.filter = 'hue-rotate(90deg)'; else if(equipped.driver === 'driver_alien') ctx.filter = 'hue-rotate(270deg)';
-                            
-                            let drawHead = headImg; let headXOffset = -25;
-                            if(equipped.driver === 'driver_sigma') { drawHead = headSigmaImg; headXOffset = -15; }
-
-                            if (drawHead.complete && drawHead.naturalWidth !== 0) {
-                                ctx.drawImage(drawHead, headXOffset, -25, 50, 50); ctx.filter = 'none';
-                                let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
-                                if (Math.abs(angle) > 1.0) { 
-                                    document.getElementById('panic-overlay').classList.add('active'); 
-                                    document.getElementById('panic-message').classList.add('active');
-                                } else { 
-                                    document.getElementById('panic-overlay').classList.remove('active'); 
-                                    document.getElementById('panic-message').classList.remove('active'); 
-                                }
-                            } else { ctx.fillStyle='#FFCC80'; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); } ctx.restore();
+                        let drawHead = headImg;
+                        let headXOffset = -25;
+                        
+                        if(equipped.driver === 'driver_sigma') {
+                             drawHead = headSigmaImg; 
+                             headXOffset = -15; 
                         }
+
+                        if (drawHead.complete && drawHead.naturalWidth !== 0) {
+                            ctx.drawImage(drawHead, headXOffset, -25, 50, 50); ctx.filter = 'none';
+                            
+                            let angle = car.chassis.angle % (Math.PI * 2); if (angle > Math.PI) angle -= Math.PI * 2; if (angle < -Math.PI) angle += Math.PI * 2;
+                            if (Math.abs(angle) > 1.0) { 
+                                document.getElementById('panic-overlay').classList.add('active'); 
+                                document.getElementById('panic-message').classList.add('active');
+                                [8, 22].forEach(xOff => { ctx.beginPath(); ctx.arc(xOff, -5, xOff === 22 ? 10 : 8, 0, Math.PI * 2); ctx.fillStyle = 'white'; ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(xOff, -5, 3, 0, Math.PI * 2); ctx.fillStyle = 'black'; ctx.fill(); });
+                            } else { 
+                                document.getElementById('panic-overlay').classList.remove('active'); 
+                                document.getElementById('panic-message').classList.remove('active'); 
+                            }
+                        } else { ctx.fillStyle='#FFCC80'; ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.fill(); } ctx.restore();
                     }
                 }
             }
