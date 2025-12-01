@@ -472,7 +472,7 @@
             if(Array.isArray(savedInv)) inventory = savedInv;
         } catch(e) { console.log("Inv error reset"); }
 
-        let equipped = { driver: 'driver_default', car: 'car_default', accessory: null };
+        let equipped = { driver: 'driver_default', car: 'car_default', accessory: null, trail: null };
         try {
             const savedEq = JSON.parse(localStorage.getItem('boombob_equipped'));
             if(savedEq) equipped = savedEq;
@@ -488,17 +488,22 @@
 
         const SHOP_ITEMS = [
             { id: 'car_boat', type: 'car', price: 600, icon: '🚤' },
-            // NEW BOBBY CAR
             { id: 'car_bobby', type: 'car', price: 5000, icon: '🚘' },
             { id: 'driver_zombie', type: 'driver', price: 5000, icon: '🧟' },
             { id: 'driver_alien', type: 'driver', price: 10000, icon: '👽' },
             { id: 'driver_sigma', type: 'driver', price: 1500, icon: '🗿' },
             { id: 'car_blue', type: 'car', price: 15000, icon: '🚙' },
             { id: 'car_gold', type: 'car', price: 50000, icon: '👑' },
-            { id: 'acc_turbo', type: 'accessory', price: 20000, icon: '🚀' }
+            { id: 'acc_turbo', type: 'accessory', price: 20000, icon: '🚀' },
+            // TRAILS
+            { id: 'trail_rainbow', type: 'trail', price: 2000, icon: '🌈', color: 'rainbow' },
+            { id: 'trail_red', type: 'trail', price: 1000, icon: '🔴', color: '#EF4444' },
+            { id: 'trail_blue', type: 'trail', price: 1000, icon: '🔵', color: '#3B82F6' },
+            { id: 'trail_green', type: 'trail', price: 1000, icon: '🟢', color: '#10B981' },
+            { id: 'trail_purple', type: 'trail', price: 1000, icon: '🟣', color: '#8B5CF6' }
         ];
 
-        const DISPLAY_ITEMS_IDS = ['car_boat', 'driver_sigma', 'car_bobby']; 
+        const DISPLAY_ITEMS_IDS = ['car_boat', 'driver_sigma', 'car_bobby', 'trail_rainbow', 'trail_red', 'trail_blue', 'trail_green', 'trail_purple']; 
 
         function saveGameData() {
             localStorage.setItem('boombob_wallet', wallet);
@@ -528,6 +533,7 @@
                 shopTitle: "MAĞAZA", inventoryTitle: "ENVANTER", levelsTitle: "BÖLÜM SEÇ", settingsTitle: "AYARLAR",
                 langLabel: "DİL / LANGUAGE", suggTitle: "ÖNERİ YAP 💡", submit: "GÖNDER", empty: "Çantan bomboş...",
                 comingSoon: "GELECEK GÜNCELLEMEDE... 🚧", shopDrivers: "SÜRÜCÜLER", shopCars: "ARABALAR", shopAccessories: "AKSESUARLAR",
+                shopTrails: "İZLER",
                 panic: "0 IQ OYNAYIŞ", ohno: "EYVAH 😱", broke: "PARASIZ EZİK!", next: "SONRAKİ LEVEL",
                 finishGame: "Tüm Leveller Bitti! Başa dönülüyor.", equip: "KUŞAN", equipped: "KUŞANDIN", buy: "SATIN AL",
                 drownTitle: "BOĞULDUN", drownMsg: "ARE U DUMB?",
@@ -535,8 +541,8 @@
                 resetBtn: "VERİLERİ SIFIRLA ⚠️", resetConfirm: "Tüm ilerlemen silinecek! Emin misin?",
                 items: {
                     'car_boat': 'Tekne', 'driver_zombie': 'Zombi Bob', 'driver_alien': 'Uzaylı', 'car_blue': 'Mavi Şimşek', 'car_gold': 'Altın Kral', 'acc_turbo': 'Turbo Motor', 'driver_default': 'Bob', 'car_default': 'Kırmızı Araba',
-                    'driver_sigma': 'Bob Sigma',
-                    'car_bobby': 'Bobby Car' // NEW
+                    'driver_sigma': 'Bob Sigma', 'car_bobby': 'Bobby Car',
+                    'trail_rainbow': 'Gökkuşağı', 'trail_red': 'Kırmızı İz', 'trail_blue': 'Mavi İz', 'trail_green': 'Yeşil İz', 'trail_purple': 'Mor İz'
                 }
             },
             en: {
@@ -550,6 +556,7 @@
                 shopTitle: "SHOP", inventoryTitle: "INVENTORY", levelsTitle: "LEVEL SELECT", settingsTitle: "SETTINGS",
                 langLabel: "LANGUAGE", suggTitle: "MAKE SUGGESTION 💡", submit: "SUBMIT", empty: "Inventory is empty...",
                 comingSoon: "COMING SOON... 🚧", shopDrivers: "DRIVERS", shopCars: "CARS", shopAccessories: "ACCESSORIES",
+                shopTrails: "TRAILS",
                 panic: "0 IQ GAMEPLAY", ohno: "OH NOO 😱", broke: "HAHA BROKE LOSER!", next: "NEXT LEVEL",
                 finishGame: "All Levels Completed! Returning to start.", equip: "EQUIP", equipped: "EQUIPPED", buy: "BUY",
                 drownTitle: "DROWNED", drownMsg: "ARE U DUMB?",
@@ -557,8 +564,8 @@
                 resetBtn: "RESET DATA ⚠️", resetConfirm: "All progress will be lost! Are you sure?",
                 items: {
                     'car_boat': 'Boat', 'driver_zombie': 'Zombie Bob', 'driver_alien': 'Alien', 'car_blue': 'Blue Lightning', 'car_gold': 'Gold King', 'acc_turbo': 'Turbo Engine', 'driver_default': 'Bob', 'car_default': 'Red Car',
-                    'driver_sigma': 'Bob Sigma',
-                    'car_bobby': 'Bobby Car' // NEW
+                    'driver_sigma': 'Bob Sigma', 'car_bobby': 'Bobby Car',
+                    'trail_rainbow': 'Rainbow', 'trail_red': 'Red Trail', 'trail_blue': 'Blue Trail', 'trail_green': 'Green Trail', 'trail_purple': 'Purple Trail'
                 }
             }
         };
@@ -588,8 +595,13 @@
         function renderShop() {
             const container = document.getElementById('shop-container');
             container.innerHTML = '';
-            const categories = ['driver', 'car', 'accessory'];
-            const titles = { driver: TEXTS[currentLang].shopDrivers, car: TEXTS[currentLang].shopCars, accessory: TEXTS[currentLang].shopAccessories };
+            const categories = ['driver', 'car', 'accessory', 'trail']; // ADDED TRAIL
+            const titles = { 
+                driver: TEXTS[currentLang].shopDrivers, 
+                car: TEXTS[currentLang].shopCars, 
+                accessory: TEXTS[currentLang].shopAccessories,
+                trail: TEXTS[currentLang].shopTrails 
+            };
 
             categories.forEach(cat => {
                 const titleDiv = document.createElement('div');
@@ -603,26 +615,24 @@
                 const itemsToShow = SHOP_ITEMS.filter(i => i.type === cat && DISPLAY_ITEMS_IDS.includes(i.id));
                 
                 if(itemsToShow.length === 0) {
-                     const emptyMsg = document.createElement('div');
-                     emptyMsg.className = 'coming-soon';
-                     emptyMsg.innerText = TEXTS[currentLang].comingSoon;
-                     container.appendChild(emptyMsg);
-                } else {
-                    itemsToShow.forEach(item => {
-                        const isOwned = inventory.includes(item.id);
-                        if(isOwned) return; 
+                     // Only show message if really empty (not filtered out)
+                     // Here we have items so it should be fine
+                } 
+                
+                itemsToShow.forEach(item => {
+                    const isOwned = inventory.includes(item.id);
+                    if(isOwned) return; 
 
-                        const div = document.createElement('div'); 
-                        div.className = `shop-item`;
-                        const itemName = TEXTS[currentLang].items[item.id] || item.id;
-                        div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${itemName}</div><div class="item-price">🪙 ${item.price}</div>`;
-                        
-                        div.addEventListener('click', () => buyItem(item));
-                        
-                        grid.appendChild(div);
-                    });
-                    container.appendChild(grid);
-                }
+                    const div = document.createElement('div'); 
+                    div.className = `shop-item`;
+                    const itemName = TEXTS[currentLang].items[item.id] || item.id;
+                    div.innerHTML = `<div class="item-icon">${item.icon}</div><div class="item-name">${itemName}</div><div class="item-price">🪙 ${item.price}</div>`;
+                    
+                    div.addEventListener('click', () => buyItem(item));
+                    
+                    grid.appendChild(div);
+                });
+                container.appendChild(grid);
             });
         }
 
@@ -685,11 +695,7 @@
         const keys = {};
         const carImg = new Image(); carImg.src = 'car.png';
         const boatImg = new Image(); boatImg.src = 'boat.png';
-        
-        // --- NEW BOBBY CAR IMAGE ---
         const carBobbyImg = new Image(); carBobbyImg.src = 'car1.jpg';
-        // ---------------------------
-
         const headImg = new Image(); headImg.src = 'head.png';
         const headSigmaImg = new Image(); headSigmaImg.src = 'head1.png';
 
@@ -1116,14 +1122,24 @@
                 
                 if (keys['KeyW']) { Matter.Body.setAngularVelocity(car.chassis, car.chassis.angularVelocity - 0.05); }
 
-                // PARTICLE GENERATION LOGIC
+                // PARTICLE GENERATION LOGIC (UPDATED WITH TRAILS)
                 if (equipped.car !== 'car_boat' && Math.abs(car.wheelBack.angularVelocity) > 0.1) {
                     const dirtX = car.wheelBack.position.x - Math.cos(car.chassis.angle) * 15; 
                     const dirtY = car.wheelBack.position.y + 15;
                     
-                    // CHOOSE PARTICLE TYPE
                     let pType = 'dirt';
-                    if (equipped.car === 'car_bobby') pType = 'money'; // MONEY PARTICLES FOR BOBBY
+                    let pColor = null;
+
+                    // PRIORITY 1: EQUIPPED TRAIL
+                    if (equipped.trail) {
+                        pType = 'trail';
+                        const trailItem = SHOP_ITEMS.find(i => i.id === equipped.trail);
+                        if(trailItem) pColor = trailItem.color;
+                    }
+                    // PRIORITY 2: CAR SPECIAL EFFECTS
+                    else if (equipped.car === 'car_bobby') {
+                        pType = 'money';
+                    }
 
                     if(Math.random() > 0.5) particles.push({ 
                         x: dirtX, 
@@ -1131,7 +1147,8 @@
                         vx: (Math.random() - 0.5) * 4 - 2, 
                         vy: -Math.random() * 3 - 1, 
                         life: 1.0, 
-                        type: pType 
+                        type: pType,
+                        color: pColor
                     });
                 }
 
@@ -1362,12 +1379,21 @@
                 particles.forEach(p => {
                     ctx.save(); ctx.globalAlpha = p.life;
                     
-                    // PARTICLE DRAWING LOGIC
+                    // PARTICLE DRAWING LOGIC (UPDATED)
                     if (p.type === 'money') {
                         ctx.fillStyle = '#10B981'; // Money Green
                         ctx.font = "bold 14px sans-serif";
                         ctx.fillText("$", p.x, p.y);
                     } 
+                    else if (p.type === 'trail') {
+                        if(p.color === 'rainbow') {
+                            const hue = (Date.now() / 5) % 360;
+                            ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                        } else {
+                            ctx.fillStyle = p.color;
+                        }
+                        ctx.beginPath(); ctx.arc(p.x, p.y, 5, 0, Math.PI*2); ctx.fill();
+                    }
                     else if(p.type === 'dirt') { 
                         ctx.fillStyle = '#5D4037'; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); 
                     } 
@@ -1380,8 +1406,6 @@
 
                 if (car && car.chassis) {
                     const wheelRad = 18;
-                    // Draw logic updated for variable wheel size if needed visually, 
-                    // but standard drawing loop uses physics body position so it will align.
                     // Visual wheel size:
                     const drawWheelRad = equipped.car === 'car_bobby' ? 12 : 18;
 
