@@ -573,7 +573,7 @@
         let bossBody = null;
         let isSprinting = false;
         let animFrame = 0; // Global animation frame
-        let bobAction = 'idle'; // idle, run, kick, punch
+        let bobAction = 'idle'; // idle, run, kick, punch, kiss
         let bobAnimTimer = 0; // Timer for specific actions
         
         // LEVEL 7 DIALOGUES
@@ -843,7 +843,7 @@
             
             // Level 7 Attacks
             if (level === 7 && lvl7State === 'fight' && !isPaused) {
-                if(e.code === 'KeyC') tryKissAttack();
+                if(e.code === 'KeyC') { tryKissAttack(); bobAction = 'kiss'; bobAnimTimer = 20; }
                 if(e.code === 'KeyJ') { performKick(); bobAction = 'kick'; bobAnimTimer = 20; } // KICK ANIMATION TRIGGER
                 if(e.code === 'KeyK') { performPunch(); bobAction = 'punch'; bobAnimTimer = 15; } // PUNCH ANIMATION TRIGGER
             }
@@ -1186,7 +1186,7 @@
         function spawnEnemy() {
             if (lvl7State !== 'fight') return;
             const x = Math.random() * (GAME_WIDTH - 100) + 50;
-            const enemy = Matter.Bodies.circle(x, -50, 25, { friction: 0.5, restitution: 0.5, label: 'enemy', hp: 30, maxHp: 30 });
+            const enemy = Matter.Bodies.circle(x, -50, 25, { friction: 0.5, restitution: 0.5, label: 'enemy', hp: 30, maxHp: 30, attackCd: 0 });
             lvl7Enemies.push(enemy);
             Matter.Composite.add(engine.world, enemy);
             // Hide HP bar for normal enemies, using Kill Count instead
@@ -1196,7 +1196,7 @@
         function spawnBoss() {
             lvl7State = 'boss';
             const x = GAME_WIDTH / 2;
-            bossBody = Matter.Bodies.circle(x, -200, 60, { friction: 0.5, restitution: 0.2, label: 'boss', hp: 300, maxHp: 300 });
+            bossBody = Matter.Bodies.circle(x, -200, 60, { friction: 0.5, restitution: 0.2, label: 'boss', hp: 300, maxHp: 300, attackCd: 0 });
             Matter.Composite.add(engine.world, bossBody);
             lvl7Enemies = [bossBody]; 
             
@@ -1214,7 +1214,8 @@
             const types = ['wine', 'cigarette', 'pan', 'potion'];
             const type = types[Math.floor(Math.random() * types.length)];
             const x = Math.random() * (GAME_WIDTH - 100) + 50;
-            const drop = Matter.Bodies.circle(x, -50, 15, { label: 'drop', dropType: type, isSensor: true });
+            // Now they are physical bodies that collide (not isSensor: true)
+            const drop = Matter.Bodies.circle(x, -50, 15, { label: 'drop', dropType: type, lifeTimer: 0 });
             lvl7Drops.push(drop);
             Matter.Composite.add(engine.world, drop);
         }
@@ -1350,15 +1351,17 @@
                             if (lvl7SprintTimer > 0) lvl7SprintTimer--;
                             if (lvl7KissCooldown > 0) lvl7KissCooldown--;
                             if (bobAnimTimer > 0) { bobAnimTimer--; } 
-                            else { if(bobAction === 'kick' || bobAction === 'punch') bobAction = 'idle'; }
+                            else { if(bobAction === 'kick' || bobAction === 'punch' || bobAction === 'kiss') bobAction = 'idle'; }
 
                             // Cooldown visual
                             const cdEl = document.getElementById('cooldown-kiss');
                             if(lvl7KissCooldown > 0) { cdEl.classList.add('cd'); cdEl.innerText = Math.ceil(lvl7KissCooldown/60); }
                             else { cdEl.classList.remove('cd'); cdEl.innerText = "💋"; }
 
-                            // Collisions with drops
-                            lvl7Drops.forEach(drop => {
+                            // DROPS PERSISTENCE & COLLISION
+                            for (let i = lvl7Drops.length - 1; i >= 0; i--) {
+                                let drop = lvl7Drops[i];
+                                // Check collision with player
                                 const dx = drop.position.x - agentBobBody.position.x;
                                 const dy = drop.position.y - agentBobBody.position.y;
                                 if (Math.sqrt(dx*dx + dy*dy) < 40) {
@@ -1369,9 +1372,20 @@
                                     if(drop.dropType === 'pan') { particles.push({x:agentBobBody.position.x, y:agentBobBody.position.y, life:1, type:'text', text:'BONK!'}); }
                                     
                                     Matter.Composite.remove(engine.world, drop);
-                                    lvl7Drops = lvl7Drops.filter(d => d !== drop);
+                                    lvl7Drops.splice(i, 1);
+                                    continue;
                                 }
-                            });
+                                
+                                // Ground Persistence Logic
+                                // If near ground level (approx > height - 60)
+                                if (drop.position.y > GAME_HEIGHT - 70) {
+                                    drop.lifeTimer++;
+                                    if (drop.lifeTimer > 240) { // 4 seconds
+                                        Matter.Composite.remove(engine.world, drop);
+                                        lvl7Drops.splice(i, 1);
+                                    }
+                                }
+                            }
                             
                             // Enemy Logic
                             lvl7Enemies.forEach(e => {
@@ -1380,15 +1394,27 @@
                                 const dir = agentBobBody.position.x > e.position.x ? 1 : -1;
                                 Matter.Body.applyForce(e, e.position, { x: dir * 0.001, y: 0 });
                                 
-                                // Attack Player
+                                // Attack Player Logic
                                 const dist = Math.abs(agentBobBody.position.x - e.position.x);
-                                if (dist < 40 && Math.random() > 0.95) {
-                                    lvl7BobHP -= 1;
-                                    document.getElementById('hp-bar-player').style.width = lvl7BobHP + '%';
-                                    if (lvl7BobHP <= 0) { gameState = 'gameover'; updateUI('gameover'); }
+                                if (dist < 60) {
+                                    // Enemy attacks periodically
+                                    if (e.attackCd > 0) e.attackCd--;
+                                    else if (Math.random() < 0.05) { // 5% chance per frame when close
+                                        // HIT!
+                                        e.attackCd = 60; // 1 sec cooldown
+                                        const dmg = e.label === 'boss' ? 15 : 5;
+                                        lvl7BobHP -= dmg;
+                                        document.getElementById('hp-bar-player').style.width = lvl7BobHP + '%';
+                                        particles.push({x: agentBobBody.position.x, y: agentBobBody.position.y - 20, life: 1, type:'text', text:'OUCH!'});
+                                        
+                                        // Knockback player
+                                        Matter.Body.applyForce(agentBobBody, agentBobBody.position, { x: (dir * -1) * 0.05, y: -0.05 });
+
+                                        if (lvl7BobHP <= 0) { gameState = 'gameover'; updateUI('gameover'); }
+                                    }
                                 }
                                 
-                                // Update Boss HP
+                                // Update Boss HP (visual only here, logic is in hit)
                                 if (e.label === 'boss') {
                                     document.getElementById('hp-bar-enemy').style.width = (e.hp / e.maxHp * 100) + '%';
                                 } 
@@ -1517,7 +1543,6 @@
             ctx.lineCap = 'round';
             
             // Animation Math
-            const sway = Math.sin(Date.now() / 200) * 0.1;
             let legL = Math.PI/2, legR = Math.PI/2;
             let armL = Math.PI/2, armR = Math.PI/2;
             
@@ -1528,10 +1553,15 @@
                 armL -= runCycle * 0.8;
                 armR += runCycle * 0.8;
             } else if (action === 'kick') {
-                legR -= 1.5; // Kick leg up
+                legR -= 2.0; // High Kick
                 armL -= 0.5;
             } else if (action === 'punch') {
-                armR -= 1.8; // Punch arm forward
+                armR -= 2.0; // Long Punch
+            } else if (action === 'kiss') {
+                armR -= 2.5; // Hand to mouth
+                // Draw Lips
+                ctx.font = "30px Arial";
+                ctx.fillText("💋", 20, headY);
             }
 
             // Body
